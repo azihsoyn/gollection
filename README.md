@@ -1,2 +1,2 @@
 # gollection
-gollection is golang collection util library
+gollection is golang collection util library (inspired by [kotlin collection](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/index.html))
