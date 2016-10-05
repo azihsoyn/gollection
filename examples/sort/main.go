@@ -11,12 +11,7 @@ func main() {
 
 	res, _ := gollection.New(arr).Sort(func(i, j int) bool {
 		return arr[i] < arr[j]
-	}).Filter(func(v interface{}) bool {
-		if n, ok := v.(int); ok && n > 5 {
-			return true
-		}
-		return false
 	}).Result()
 	fmt.Println("origin : ", arr)
-	fmt.Println("ret : ", res)
+	fmt.Println("ret    : ", res)
 }
