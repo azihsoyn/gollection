@@ -18,7 +18,7 @@ func (g *gollection) FlatMap(f func(v interface{}) interface{}) *gollection {
 		}
 	}
 
-	ret := make([]interface{}, 0, sv.Len())
+	var ret reflect.Value
 	for i := 0; i < sv.Len(); i++ {
 		v := sv.Index(i).Interface()
 		svv := reflect.ValueOf(v)
@@ -26,12 +26,17 @@ func (g *gollection) FlatMap(f func(v interface{}) interface{}) *gollection {
 			continue
 		}
 		for j := 0; j < svv.Len(); j++ {
-			ret = append(ret, f(svv.Index(j).Interface()))
+			v := reflect.ValueOf(f(svv.Index(j).Interface()))
+			// init
+			if i == 0 && j == 0 {
+				ret = reflect.MakeSlice(reflect.SliceOf(v.Type()), 0, sv.Len())
+			}
+			ret = reflect.Append(ret, v)
 		}
 	}
 
 	return &gollection{
-		slice: ret,
+		slice: ret.Interface(),
 		err:   nil,
 	}
 }
