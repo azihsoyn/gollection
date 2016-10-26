@@ -23,3 +23,11 @@ func TestFold(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal(expect, res)
 }
+
+func TestFold_NotSlice(t *testing.T) {
+	assert := assert.New(t)
+	_, err := gollection.New("not flice value").Fold(100, func(v1, v2 interface{}) interface{} {
+		return ""
+	}).Result()
+	assert.Error(err)
+}

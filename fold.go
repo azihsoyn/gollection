@@ -14,7 +14,7 @@ func (g *gollection) Fold(v0 interface{}, f func(v1, v2 interface{}) interface{}
 	if sv.Kind() != reflect.Slice {
 		return &gollection{
 			slice: nil,
-			err:   fmt.Errorf("gollection.Reduce called with non-slice value of type %T", g.slice),
+			err:   fmt.Errorf("gollection.Fold called with non-slice value of type %T", g.slice),
 		}
 	}
 

@@ -21,3 +21,11 @@ func TestFilter(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal(expect, res)
 }
+
+func TestFilter_NotSlice(t *testing.T) {
+	assert := assert.New(t)
+	_, err := gollection.New("not flice value").Filter(func(v interface{}) bool {
+		return true
+	}).Result()
+	assert.Error(err)
+}

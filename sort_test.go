@@ -23,3 +23,11 @@ func TestSort(t *testing.T) {
 	// check not changed
 	assert.Equal(original, arr)
 }
+
+func TestSort_NotSlice(t *testing.T) {
+	assert := assert.New(t)
+	_, err := gollection.New("not flice value").Sort(func(i, j int) bool {
+		return false
+	}).Result()
+	assert.Error(err)
+}

@@ -24,3 +24,11 @@ func ReduceTest(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal(expect, res)
 }
+
+func TestReduce_NotSlice(t *testing.T) {
+	assert := assert.New(t)
+	_, err := gollection.New("not flice value").Reduce(func(v1, v2 interface{}) interface{} {
+		return ""
+	}).Result()
+	assert.Error(err)
+}

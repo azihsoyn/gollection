@@ -26,3 +26,11 @@ func TestFlatMap(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal(expect, res)
 }
+
+func TestFlatMap_NotSlice(t *testing.T) {
+	assert := assert.New(t)
+	_, err := gollection.New("not flice value").FlatMap(func(v interface{}) interface{} {
+		return ""
+	}).Result()
+	assert.Error(err)
+}
