@@ -14,7 +14,7 @@ func (g *gollection) Take(n int) *gollection {
 	if sv.Kind() != reflect.Slice {
 		return &gollection{
 			slice: nil,
-			err:   fmt.Errorf("gollection.Filter called with non-slice value of type %T", g.slice),
+			err:   fmt.Errorf("gollection.Take called with non-slice value of type %T", g.slice),
 		}
 	}
 
@@ -23,14 +23,13 @@ func (g *gollection) Take(n int) *gollection {
 		limit = n
 	}
 
-	ret := make([]interface{}, 0, limit)
+	ret := reflect.MakeSlice(sv.Type(), 0, sv.Len())
 
 	for i := 0; i < limit; i++ {
-		v := sv.Index(i).Interface()
-		ret = append(ret, v)
+		ret = reflect.Append(ret, sv.Index(i))
 	}
 
 	return &gollection{
-		slice: ret,
+		slice: ret.Interface(),
 	}
 }
