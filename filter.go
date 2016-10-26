@@ -18,16 +18,16 @@ func (g *gollection) Filter(f func(v interface{}) bool) *gollection {
 		}
 	}
 
-	ret := make([]interface{}, 0, sv.Len())
+	ret := reflect.MakeSlice(sv.Type(), 0, sv.Len())
 
 	for i := 0; i < sv.Len(); i++ {
-		v := sv.Index(i).Interface()
-		if f(v) {
-			ret = append(ret, v)
+		v := sv.Index(i)
+		if f(v.Interface()) {
+			ret = reflect.Append(ret, sv.Index(i))
 		}
 	}
 
 	return &gollection{
-		slice: ret,
+		slice: ret.Interface(),
 	}
 }
