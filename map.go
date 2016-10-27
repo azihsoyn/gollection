@@ -17,14 +17,21 @@ func (g *gollection) Map(f func(v interface{}) interface{}) *gollection {
 			err:   fmt.Errorf("gollection.Map called with non-slice value of type %T", g.slice),
 		}
 	}
-	var ret reflect.Value
+
+	// init
+	retType := reflect.ValueOf(f(nil)).Type()
+	ret := reflect.MakeSlice(reflect.SliceOf(retType), 0, sv.Len())
+
+	// avoid "panic: reflect: call of reflect.Value.Interface on zero Value"
+	// see https://github.com/azihsoyn/gollection/issues/7
+	if sv.Len() == 0 {
+		return &gollection{
+			slice: ret.Interface(),
+		}
+	}
 
 	for i := 0; i < sv.Len(); i++ {
 		v := reflect.ValueOf(f(sv.Index(i).Interface()))
-		// init
-		if i == 0 {
-			ret = reflect.MakeSlice(reflect.SliceOf(v.Type()), 0, sv.Len())
-		}
 		ret = reflect.Append(ret, v)
 	}
 

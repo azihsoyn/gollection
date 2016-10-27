@@ -18,7 +18,18 @@ func (g *gollection) FlatMap(f func(v interface{}) interface{}) *gollection {
 		}
 	}
 
-	var ret reflect.Value
+	// init
+	retType := reflect.ValueOf(f(nil)).Type()
+	ret := reflect.MakeSlice(reflect.SliceOf(retType), 0, sv.Len())
+
+	// avoid "panic: reflect: call of reflect.Value.Interface on zero Value"
+	// see https://github.com/azihsoyn/gollection/issues/7
+	if sv.Len() == 0 {
+		return &gollection{
+			slice: ret.Interface(),
+		}
+	}
+
 	for i := 0; i < sv.Len(); i++ {
 		v := sv.Index(i).Interface()
 		svv := reflect.ValueOf(v)
@@ -27,10 +38,6 @@ func (g *gollection) FlatMap(f func(v interface{}) interface{}) *gollection {
 		}
 		for j := 0; j < svv.Len(); j++ {
 			v := reflect.ValueOf(f(svv.Index(j).Interface()))
-			// init
-			if i == 0 && j == 0 {
-				ret = reflect.MakeSlice(reflect.SliceOf(v.Type()), 0, sv.Len())
-			}
 			ret = reflect.Append(ret, v)
 		}
 	}
