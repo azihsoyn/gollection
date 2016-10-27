@@ -8,7 +8,7 @@ import (
 	"go4.org/reflectutil"
 )
 
-func (g *gollection) Sort(less func(i, j int) bool) *gollection {
+func (g *gollection) SortBy(f func(v1, v2 interface{}) bool) *gollection {
 	if g.err != nil {
 		return &gollection{err: g.err}
 	}
@@ -17,12 +17,16 @@ func (g *gollection) Sort(less func(i, j int) bool) *gollection {
 	if sv.Kind() != reflect.Slice {
 		return &gollection{
 			slice: nil,
-			err:   fmt.Errorf("gollection.Sort called with non-slice value of type %T", g.slice),
+			err:   fmt.Errorf("gollection.SortBy called with non-slice value of type %T", g.slice),
 		}
 	}
 	orig := reflect.MakeSlice(sv.Type(), sv.Len(), sv.Cap())
 	ret := reflect.MakeSlice(sv.Type(), sv.Len(), sv.Cap())
 	reflect.Copy(orig, sv)
+
+	less := func(i, j int) bool {
+		return f(sv.Index(i).Interface(), sv.Index(j).Interface())
+	}
 
 	sort.Sort(&funcs{
 		length: sv.Len(),
