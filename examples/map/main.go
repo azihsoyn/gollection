@@ -13,7 +13,7 @@ func main() {
 		if n, ok := v.(int); ok {
 			return n * 2
 		}
-		return ""
+		return 0
 	}).Result()
 	fmt.Println("origin : ", arr)
 	fmt.Println("ret    : ", res)

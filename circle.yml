@@ -1,0 +1,32 @@
+machine:
+  pre:
+    - curl -L https://raw.github.com/grobins2/gobrew/master/tools/install.sh | sh
+    - mkdir -p /home/ubuntu/cache
+  post:
+    - $HOME/.gobrew/bin/gobrew init -
+    - $HOME/.gobrew/bin/gobrew install $CIRCLECI_GO_VERSION
+    - $HOME/.gobrew/bin/gobrew use $CIRCLECI_GO_VERSION
+    - which go
+    - go version
+
+dependencies:
+  pre:
+    - which go
+    - go version
+  cache_directories:
+    - /home/ubuntu/cache
+    - /home/ubuntu/.gobrew
+  post:
+    - >
+      if [[ ! "${CIRCLE_BRANCH}" =~ (release.*|hotfix.*) ]] ; then
+        go get github.com/mattn/goveralls
+        go get golang.org/x/tools/cmd/cover
+        go get github.com/azihsoyn/gocovercache
+        gocovercache -outdir=/home/ubuntu/cache -coverprofile=profile.cov
+        goveralls -coverprofile=profile.cov -service=circle-ci -repotoken $COVERALLS_TOKEN
+      fi
+
+test:
+  override:
+    - go vet ./...
+    - go test -race ./...
