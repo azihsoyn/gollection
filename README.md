@@ -12,3 +12,13 @@ gollection is golang collection util library (inspired by [kotlin collection](ht
 - reduce
 - sort
 - take
+
+# Installation
+
+`go get github.com/azihsoyn/gollection`
+
+# Usage
+see [examples code](https://github.com/azihsoyn/gollection/tree/master/examples)
+
+# LICENSE
+MIT
