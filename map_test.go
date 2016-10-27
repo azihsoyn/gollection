@@ -38,6 +38,14 @@ func TestMap_WithCast(t *testing.T) {
 	assert.Equal(expect, res)
 }
 
+func TestMap_EmptySlice(t *testing.T) {
+	assert := assert.New(t)
+	_, err := gollection.New([]int{}).Map(func(v interface{}) interface{} {
+		return ""
+	}).Result()
+	assert.NoError(err)
+}
+
 func TestMap_NotSlice(t *testing.T) {
 	assert := assert.New(t)
 	_, err := gollection.New("not slice value").Map(func(v interface{}) interface{} {

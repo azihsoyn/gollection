@@ -21,7 +21,7 @@ func TestFlatMap(t *testing.T) {
 		if n, ok := v.(int); ok {
 			return n * 2
 		}
-		return ""
+		return 0
 	}).Result()
 	assert.NoError(err)
 	assert.Equal(expect, res)
@@ -40,6 +40,16 @@ func TestFlatMap_InterfaceSlice(t *testing.T) {
 		if n, ok := v.(int); ok {
 			return n * 2
 		}
+		return 0
+	}).Result()
+	assert.NoError(err)
+	assert.Equal(expect, res)
+}
+
+func TestFlatMap_EmptySlice(t *testing.T) {
+	assert := assert.New(t)
+	expect := []string{}
+	res, err := gollection.New([][]int{}).FlatMap(func(v interface{}) interface{} {
 		return ""
 	}).Result()
 	assert.NoError(err)

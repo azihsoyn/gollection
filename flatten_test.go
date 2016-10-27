@@ -32,18 +32,34 @@ func TestFlatten(t *testing.T) {
 	assert.Equal(expect, res)
 }
 
-func TestFlatten_InterfaceSlice(t *testing.T) {
+func TestFlatten_EmptySlice(t *testing.T) {
 	assert := assert.New(t)
-	arr := []interface{}{
-		[]int{1, 2, 3},
-		"a", "b",
-		nil,
-	}
-	expect := []int{1, 2, 3}
+	arr := [][]int{}
+	expect := []int{}
 
 	res, err := gollection.New(arr).Flatten().Result()
 	assert.NoError(err)
 	assert.Equal(expect, res)
+}
+
+func TestFlatten_InterfaceSlice(t *testing.T) {
+	assert := assert.New(t)
+	arr := [][]interface{}{
+		[]interface{}{1, 2, 3},
+		[]interface{}{"a", "b"},
+	}
+	expect := []interface{}{1, 2, 3, "a", "b"}
+
+	res, err := gollection.New(arr).Flatten().Result()
+	assert.NoError(err)
+	assert.Equal(expect, res)
+}
+
+func TestFlatten_NotSliceOfSlice(t *testing.T) {
+	assert := assert.New(t)
+
+	_, err := gollection.New([]int{}).Flatten().Result()
+	assert.Error(err)
 }
 
 func TestFlatten_NotSlice(t *testing.T) {

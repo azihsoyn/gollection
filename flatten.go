@@ -18,17 +18,20 @@ func (g *gollection) Flatten() *gollection {
 		}
 	}
 
-	var ret reflect.Value
+	currentType := reflect.TypeOf(g.slice).Elem()
+	if currentType.Kind() != reflect.Slice {
+		return &gollection{
+			slice: nil,
+			err:   fmt.Errorf("gollection.Flatten called with non-slice-of-slice value of type %T", g.slice),
+		}
+	}
+
+	// init
+	ret := reflect.MakeSlice(currentType, 0, sv.Len())
+
 	for i := 0; i < sv.Len(); i++ {
 		v := sv.Index(i).Interface()
 		svv := reflect.ValueOf(v)
-		// init
-		if i == 0 {
-			ret = reflect.MakeSlice(svv.Type(), 0, sv.Len())
-		}
-		if svv.Kind() != reflect.Slice {
-			continue
-		}
 		for j := 0; j < svv.Len(); j++ {
 			ret = reflect.Append(ret, svv.Index(j))
 		}
