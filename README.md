@@ -11,7 +11,7 @@ gollection is golang collection util library (inspired by [kotlin collection](ht
 - fold
 - map
 - reduce
-- sort
+- sortBy
 - take
 
 # Installation
