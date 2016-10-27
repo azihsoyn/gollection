@@ -28,3 +28,31 @@ func TestDistinct_HavingError(t *testing.T) {
 	_, err := gollection.New("not slice value").Distinct().Distinct().Result()
 	assert.Error(err)
 }
+
+func TestDistinctBy(t *testing.T) {
+	assert := assert.New(t)
+	arr := []string{"aaa", "bb", "c", "ddd", "ee", "f"}
+	expect := []string{"aaa", "bb", "c"}
+
+	res, err := gollection.New(arr).DistinctBy(func(v interface{}) interface{} {
+		return len(v.(string))
+	}).Result()
+	assert.NoError(err)
+	assert.Equal(expect, res)
+}
+
+func TestDistinctBy_NotSlice(t *testing.T) {
+	assert := assert.New(t)
+	_, err := gollection.New("not slice value").DistinctBy(func(v interface{}) interface{} {
+		return v
+	}).Result()
+	assert.Error(err)
+}
+
+func TestDistinctBy_HavingError(t *testing.T) {
+	assert := assert.New(t)
+	_, err := gollection.New("not slice value").DistinctBy(func(v interface{}) interface{} {
+		return v
+	}).Distinct().Result()
+	assert.Error(err)
+}
