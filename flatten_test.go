@@ -19,6 +19,17 @@ func TestFlatten(t *testing.T) {
 	res, err := gollection.New(arr).Flatten().Result()
 	assert.NoError(err)
 	assert.Equal(expect, res)
+
+	arr = [][]int{
+		{1},
+		nil,
+		{2},
+	}
+	expect = []int{1, 2}
+
+	res, err = gollection.New(arr).Flatten().Result()
+	assert.NoError(err)
+	assert.Equal(expect, res)
 }
 
 func TestFlatten_NotSlice(t *testing.T) {

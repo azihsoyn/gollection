@@ -22,6 +22,20 @@ func TestFold(t *testing.T) {
 	}).Result()
 	assert.NoError(err)
 	assert.Equal(expect, res)
+
+	arr = []int{}
+	expect = 100
+
+	res, err = gollection.New(arr).Fold(100, func(v1, v2 interface{}) interface{} {
+		n1, ok1 := v1.(int)
+		n2, ok2 := v2.(int)
+		if ok1 && ok2 {
+			return n1 + n2
+		}
+		return ""
+	}).Result()
+	assert.NoError(err)
+	assert.Equal(expect, res)
 }
 
 func TestFold_NotSlice(t *testing.T) {

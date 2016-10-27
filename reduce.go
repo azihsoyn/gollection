@@ -19,7 +19,10 @@ func (g *gollection) Reduce(f func(v1, v2 interface{}) interface{}) *gollection 
 	}
 
 	if sv.Len() == 0 {
-		return &gollection{}
+		return &gollection{
+			slice: nil,
+			err:   fmt.Errorf("gollection.Reduce called with empty slice of type %T", g.slice),
+		}
 	} else if sv.Len() == 1 {
 		return &gollection{
 			val: sv.Index(0).Interface(),
