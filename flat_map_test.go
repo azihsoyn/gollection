@@ -29,8 +29,21 @@ func TestFlatMap(t *testing.T) {
 
 func TestFlatMap_NotSlice(t *testing.T) {
 	assert := assert.New(t)
-	_, err := gollection.New("not flice value").FlatMap(func(v interface{}) interface{} {
+	_, err := gollection.New("not slice value").FlatMap(func(v interface{}) interface{} {
 		return ""
 	}).Result()
+	assert.Error(err)
+}
+
+func TestFlatMap_HavingError(t *testing.T) {
+	assert := assert.New(t)
+	_, err := gollection.New("not slice value").
+		FlatMap(func(v interface{}) interface{} {
+		return ""
+	}).
+		FlatMap(func(v interface{}) interface{} {
+		return ""
+	}).
+		Result()
 	assert.Error(err)
 }

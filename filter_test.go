@@ -24,8 +24,21 @@ func TestFilter(t *testing.T) {
 
 func TestFilter_NotSlice(t *testing.T) {
 	assert := assert.New(t)
-	_, err := gollection.New("not flice value").Filter(func(v interface{}) bool {
+	_, err := gollection.New("not slice value").Filter(func(v interface{}) bool {
 		return true
 	}).Result()
+	assert.Error(err)
+}
+
+func TestFilter_HavingError(t *testing.T) {
+	assert := assert.New(t)
+	_, err := gollection.New("not slice value").
+		Filter(func(v interface{}) bool {
+		return true
+	}).
+		Filter(func(v interface{}) bool {
+		return true
+	}).
+		Result()
 	assert.Error(err)
 }

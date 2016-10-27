@@ -40,8 +40,21 @@ func TestMap_WithCast(t *testing.T) {
 
 func TestMap_NotSlice(t *testing.T) {
 	assert := assert.New(t)
-	_, err := gollection.New("not flice value").Map(func(v interface{}) interface{} {
+	_, err := gollection.New("not slice value").Map(func(v interface{}) interface{} {
 		return ""
 	}).Result()
+	assert.Error(err)
+}
+
+func TestMap_HavingError(t *testing.T) {
+	assert := assert.New(t)
+	_, err := gollection.New("not slice value").
+		Map(func(v interface{}) interface{} {
+		return ""
+	}).
+		Map(func(v interface{}) interface{} {
+		return ""
+	}).
+		Result()
 	assert.Error(err)
 }

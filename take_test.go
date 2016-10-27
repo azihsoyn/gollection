@@ -24,6 +24,12 @@ func TestTake(t *testing.T) {
 
 func TestTake_NotSlice(t *testing.T) {
 	assert := assert.New(t)
-	_, err := gollection.New("not flice value").Take(0).Result()
+	_, err := gollection.New("not slice value").Take(0).Result()
+	assert.Error(err)
+}
+
+func TestTake_HavingError(t *testing.T) {
+	assert := assert.New(t)
+	_, err := gollection.New("not slice value").Take(0).Take(0).Result()
 	assert.Error(err)
 }

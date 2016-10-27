@@ -26,8 +26,21 @@ func TestSort(t *testing.T) {
 
 func TestSort_NotSlice(t *testing.T) {
 	assert := assert.New(t)
-	_, err := gollection.New("not flice value").Sort(func(i, j int) bool {
+	_, err := gollection.New("not slice value").Sort(func(i, j int) bool {
 		return false
 	}).Result()
+	assert.Error(err)
+}
+
+func TestSort_HavingError(t *testing.T) {
+	assert := assert.New(t)
+	_, err := gollection.New("not slice value").
+		Sort(func(i, j int) bool {
+		return false
+	}).
+		Sort(func(i, j int) bool {
+		return false
+	}).
+		Result()
 	assert.Error(err)
 }

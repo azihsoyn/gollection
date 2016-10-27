@@ -20,3 +20,17 @@ func TestFlatten(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal(expect, res)
 }
+
+func TestFlatten_NotSlice(t *testing.T) {
+	assert := assert.New(t)
+
+	_, err := gollection.New("not slice value").Flatten().Result()
+	assert.Error(err)
+}
+
+func TestFlatten_HavingError(t *testing.T) {
+	assert := assert.New(t)
+
+	_, err := gollection.New("not slice value").Flatten().Flatten().Result()
+	assert.Error(err)
+}

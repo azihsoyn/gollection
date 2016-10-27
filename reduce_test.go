@@ -27,8 +27,21 @@ func ReduceTest(t *testing.T) {
 
 func TestReduce_NotSlice(t *testing.T) {
 	assert := assert.New(t)
-	_, err := gollection.New("not flice value").Reduce(func(v1, v2 interface{}) interface{} {
+	_, err := gollection.New("not slice value").Reduce(func(v1, v2 interface{}) interface{} {
 		return ""
 	}).Result()
+	assert.Error(err)
+}
+
+func TestReduce_HavingError(t *testing.T) {
+	assert := assert.New(t)
+	_, err := gollection.New("not slice value").
+		Reduce(func(v1, v2 interface{}) interface{} {
+		return ""
+	}).
+		Reduce(func(v1, v2 interface{}) interface{} {
+		return ""
+	}).
+		Result()
 	assert.Error(err)
 }

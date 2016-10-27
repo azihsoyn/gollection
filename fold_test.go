@@ -26,8 +26,21 @@ func TestFold(t *testing.T) {
 
 func TestFold_NotSlice(t *testing.T) {
 	assert := assert.New(t)
-	_, err := gollection.New("not flice value").Fold(100, func(v1, v2 interface{}) interface{} {
+	_, err := gollection.New("not slice value").Fold(100, func(v1, v2 interface{}) interface{} {
 		return ""
 	}).Result()
+	assert.Error(err)
+}
+
+func TestFold_HavingError(t *testing.T) {
+	assert := assert.New(t)
+	_, err := gollection.New("not slice value").
+		Fold(100, func(v1, v2 interface{}) interface{} {
+		return ""
+	}).
+		Fold(100, func(v1, v2 interface{}) interface{} {
+		return ""
+	}).
+		Result()
 	assert.Error(err)
 }
