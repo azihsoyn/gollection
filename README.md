@@ -5,6 +5,7 @@ gollection is golang collection util library (inspired by [kotlin collection](ht
 
 # supported functions
 - distinct
+- distinctBy
 - filter
 - flatMap
 - flatten

@@ -18,14 +18,12 @@ func (g *gollection) Flatten() *gollection {
 		}
 	}
 
-	var ret reflect.Value
+	// init
+	currentType := reflect.TypeOf(g.slice).Elem()
+	ret := reflect.MakeSlice(currentType, 0, sv.Len())
 	for i := 0; i < sv.Len(); i++ {
 		v := sv.Index(i).Interface()
 		svv := reflect.ValueOf(v)
-		// init
-		if i == 0 {
-			ret = reflect.MakeSlice(svv.Type(), 0, sv.Len())
-		}
 		if svv.Kind() != reflect.Slice {
 			continue
 		}
