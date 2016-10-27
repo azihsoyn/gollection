@@ -47,13 +47,19 @@ func TestFlatten_InterfaceSlice(t *testing.T) {
 	arr := [][]interface{}{
 		[]interface{}{1, 2, 3},
 		[]interface{}{"a", "b"},
-		nil,
 	}
 	expect := []interface{}{1, 2, 3, "a", "b"}
 
 	res, err := gollection.New(arr).Flatten().Result()
 	assert.NoError(err)
 	assert.Equal(expect, res)
+}
+
+func TestFlatten_NotSliceOfSlice(t *testing.T) {
+	assert := assert.New(t)
+
+	_, err := gollection.New([]int{}).Flatten().Result()
+	assert.Error(err)
 }
 
 func TestFlatten_NotSlice(t *testing.T) {
