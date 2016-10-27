@@ -17,7 +17,7 @@ func TestMap(t *testing.T) {
 		if n, ok := v.(int); ok {
 			return n * 2
 		}
-		return ""
+		return 0
 	}).Result()
 	assert.NoError(err)
 	assert.Equal(expect, res)
