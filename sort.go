@@ -8,7 +8,7 @@ import (
 	"go4.org/reflectutil"
 )
 
-func (g *gollection) SortBy(f func(v1, v2 interface{}) bool) *gollection {
+func (g *gollection) SortBy(f interface{}) *gollection {
 	if g.err != nil {
 		return &gollection{err: g.err}
 	}
@@ -24,8 +24,17 @@ func (g *gollection) SortBy(f func(v1, v2 interface{}) bool) *gollection {
 	ret := reflect.MakeSlice(sv.Type(), sv.Len(), sv.Cap())
 	reflect.Copy(orig, sv)
 
+	funcValue := reflect.ValueOf(f)
+	funcType := funcValue.Type()
+	if funcType.Kind() != reflect.Func || funcType.NumIn() != 2 || funcType.NumOut() != 1 || funcType.Out(0).Kind() != reflect.Bool {
+		return &gollection{
+			slice: nil,
+			err:   fmt.Errorf("gollection.SortBy called with invalid func. required func(in1, in2 <T>) bool but supplied %v", g.slice),
+		}
+	}
+
 	less := func(i, j int) bool {
-		return f(sv.Index(i).Interface(), sv.Index(j).Interface())
+		return funcValue.Call([]reflect.Value{sv.Index(i), sv.Index(j)})[0].Interface().(bool)
 	}
 
 	sort.Sort(&funcs{

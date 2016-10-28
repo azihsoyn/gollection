@@ -14,8 +14,8 @@ func TestSortBy(t *testing.T) {
 	original := make([]int, len(arr))
 	copy(original, arr)
 
-	res, err := gollection.New(arr).SortBy(func(v1, v2 interface{}) bool {
-		return v1.(int) < v2.(int)
+	res, err := gollection.New(arr).SortBy(func(v1, v2 int) bool {
+		return v1 < v2
 	}).Result()
 
 	assert.NoError(err)
