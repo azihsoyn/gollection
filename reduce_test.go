@@ -37,7 +37,7 @@ func TestReduce_NotSlice(t *testing.T) {
 }
 func TestReduce_NotFunc(t *testing.T) {
 	assert := assert.New(t)
-	_, err := gollection.New([]int{}).Reduce(0).Result()
+	_, err := gollection.New([]int{0, 0, 0}).Reduce(0).Result()
 	assert.Error(err)
 }
 

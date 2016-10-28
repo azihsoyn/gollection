@@ -55,7 +55,7 @@ func TestFlatMap_EmptySlice(t *testing.T) {
 
 func TestFlatMap_NotFunc(t *testing.T) {
 	assert := assert.New(t)
-	_, err := gollection.New([]int{}).FlatMap(0).Result()
+	_, err := gollection.New([]int{0, 0, 0}).FlatMap(0).Result()
 	assert.Error(err)
 }
 

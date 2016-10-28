@@ -23,12 +23,16 @@ func TestSortBy(t *testing.T) {
 	// check not changed
 	assert.Equal(original, arr)
 }
-
 func TestSort_NotSlice(t *testing.T) {
 	assert := assert.New(t)
 	_, err := gollection.New("not slice value").SortBy(func(v1, v2 interface{}) bool {
 		return false
 	}).Result()
+	assert.Error(err)
+}
+func TestSort_NotFunc(t *testing.T) {
+	assert := assert.New(t)
+	_, err := gollection.New([]int{0, 0, 0}).SortBy(0).Result()
 	assert.Error(err)
 }
 
