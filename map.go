@@ -19,7 +19,9 @@ func (g *gollection) Map(f func(v interface{}) interface{}) *gollection {
 	}
 
 	// init
-	retType := reflect.ValueOf(f(nil)).Type()
+	currentType := reflect.TypeOf(g.slice).Elem()
+	tmp := reflect.New(currentType).Elem().Interface()
+	retType := reflect.ValueOf(f(tmp)).Type()
 	ret := reflect.MakeSlice(reflect.SliceOf(retType), 0, sv.Len())
 
 	// avoid "panic: reflect: call of reflect.Value.Interface on zero Value"
