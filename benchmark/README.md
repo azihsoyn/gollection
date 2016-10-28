@@ -24,3 +24,21 @@ BenchmarkTake-8                                1000000          2515 ns/op      
 BenchmarkTake_WithoutGollection-8              2000000           706 ns/op         160 B/op           1 allocs/op
 PASS
 ```
+
+machine spec
+```
+$ system_profiler SPHardwareDataType
+Hardware:
+
+    Hardware Overview:
+
+      Model Name: MacBook Pro
+      Model Identifier: MacBookPro11,4
+      Processor Name: Intel Core i7
+      Processor Speed: 2.2 GHz
+      Number of Processors: 1
+      Total Number of Cores: 4
+      L2 Cache (per Core): 256 KB
+      L3 Cache: 6 MB
+      Memory: 16 GB
+```
