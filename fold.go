@@ -29,7 +29,7 @@ func (g *gollection) Fold(v0 interface{}, f interface{}) *gollection {
 	if funcType.Kind() != reflect.Func || funcType.NumIn() != 2 || funcType.NumOut() != 1 {
 		return &gollection{
 			slice: nil,
-			err:   fmt.Errorf("gollection.Filter called with invalid func. required func(in1, in2 <T>) out <T> but supplied %v", g.slice),
+			err:   fmt.Errorf("gollection.Fold called with invalid func. required func(in1, in2 <T>) out <T> but supplied %v", g.slice),
 		}
 	}
 

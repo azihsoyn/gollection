@@ -23,7 +23,7 @@ func (g *gollection) Map(f interface{}) *gollection {
 	if funcType.Kind() != reflect.Func || funcType.NumIn() != 1 || funcType.NumOut() != 1 {
 		return &gollection{
 			slice: nil,
-			err:   fmt.Errorf("gollection.Filter called with invalid func. required func(in <T>) out <T> but supplied %v", g.slice),
+			err:   fmt.Errorf("gollection.Map called with invalid func. required func(in <T>) out <T> but supplied %v", g.slice),
 		}
 	}
 	resultSliceType := reflect.SliceOf(funcType.Out(0))
