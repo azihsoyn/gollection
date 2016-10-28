@@ -17,7 +17,7 @@ gollection is golang collection util library (inspired by [kotlin collection](ht
 
 # Installation
 
-`go get github.com/azihsoyn/gollection`
+`go get github.com/azihsoyn/gollection` or `go get gopkg.in/azihsoyn/gollection.v1`
 
 # Usage
 see [examples code](https://github.com/azihsoyn/gollection/tree/master/examples)
