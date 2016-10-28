@@ -18,7 +18,6 @@ func (g *gollection) FlatMap(f interface{}) *gollection {
 		}
 	}
 
-	// init
 	currentType := reflect.TypeOf(g.slice).Elem()
 	if currentType.Kind() != reflect.Slice {
 		return &gollection{
@@ -26,13 +25,13 @@ func (g *gollection) FlatMap(f interface{}) *gollection {
 			err:   fmt.Errorf("gollection.FlatMap called with non-slice-of-slice value of type %T", g.slice),
 		}
 	}
+
 	funcValue := reflect.ValueOf(f)
 	funcType := funcValue.Type()
-
 	if funcType.Kind() != reflect.Func || funcType.NumIn() != 1 || funcType.NumOut() != 1 {
 		return &gollection{
 			slice: nil,
-			err:   fmt.Errorf("gollection.FlatMap called with invalid func. required func(in <T>) out <T>.", g.slice),
+			err:   fmt.Errorf("gollection.FlatMap called with invalid func. required func(in <T>) out <T> but supplied %v", g.slice),
 		}
 	}
 

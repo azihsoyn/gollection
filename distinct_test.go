@@ -34,8 +34,8 @@ func TestDistinctBy(t *testing.T) {
 	arr := []string{"aaa", "bb", "c", "ddd", "ee", "f"}
 	expect := []string{"aaa", "bb", "c"}
 
-	res, err := gollection.New(arr).DistinctBy(func(v interface{}) interface{} {
-		return len(v.(string))
+	res, err := gollection.New(arr).DistinctBy(func(v string) int {
+		return len(v)
 	}).Result()
 	assert.NoError(err)
 	assert.Equal(expect, res)
