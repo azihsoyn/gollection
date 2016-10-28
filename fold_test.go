@@ -27,12 +27,16 @@ func TestFold(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal(expect, res)
 }
-
 func TestFold_NotSlice(t *testing.T) {
 	assert := assert.New(t)
 	_, err := gollection.New("not slice value").Fold(100, func(v1, v2 interface{}) interface{} {
 		return ""
 	}).Result()
+	assert.Error(err)
+}
+func TestFold_NotFunc(t *testing.T) {
+	assert := assert.New(t)
+	_, err := gollection.New([]int{0}).Fold(100, 0).Result()
 	assert.Error(err)
 }
 

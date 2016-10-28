@@ -53,6 +53,20 @@ func TestFlatMap_EmptySlice(t *testing.T) {
 	assert.Equal(expect, res)
 }
 
+func TestFlatMap_NotFunc(t *testing.T) {
+	assert := assert.New(t)
+	_, err := gollection.New([]int{}).FlatMap(0).Result()
+	assert.Error(err)
+}
+
+func TestFlatMap_NonSliceOfSlice(t *testing.T) {
+	assert := assert.New(t)
+	_, err := gollection.New([]int{}).FlatMap(func(v int) string {
+		return ""
+	}).Result()
+	assert.Error(err)
+}
+
 func TestFlatMap_NotSlice(t *testing.T) {
 	assert := assert.New(t)
 	_, err := gollection.New("not slice value").FlatMap(func(v interface{}) interface{} {

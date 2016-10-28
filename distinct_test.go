@@ -40,12 +40,16 @@ func TestDistinctBy(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal(expect, res)
 }
-
 func TestDistinctBy_NotSlice(t *testing.T) {
 	assert := assert.New(t)
 	_, err := gollection.New("not slice value").DistinctBy(func(v interface{}) interface{} {
 		return v
 	}).Result()
+	assert.Error(err)
+}
+func TestDistinctBy_NotFunc(t *testing.T) {
+	assert := assert.New(t)
+	_, err := gollection.New([]int{}).DistinctBy(0).Result()
 	assert.Error(err)
 }
 

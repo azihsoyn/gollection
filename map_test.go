@@ -39,12 +39,16 @@ func TestMap_EmptySlice(t *testing.T) {
 	}).Result()
 	assert.NoError(err)
 }
-
 func TestMap_NotSlice(t *testing.T) {
 	assert := assert.New(t)
 	_, err := gollection.New("not slice value").Map(func(v interface{}) interface{} {
 		return ""
 	}).Result()
+	assert.Error(err)
+}
+func TestMap_NotFunc(t *testing.T) {
+	assert := assert.New(t)
+	_, err := gollection.New([]int{}).Map(0).Result()
 	assert.Error(err)
 }
 

@@ -18,12 +18,16 @@ func TestFilter(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal(expect, res)
 }
-
 func TestFilter_NotSlice(t *testing.T) {
 	assert := assert.New(t)
 	_, err := gollection.New("not slice value").Filter(func(v interface{}) bool {
 		return true
 	}).Result()
+	assert.Error(err)
+}
+func TestFilter_NotFunc(t *testing.T) {
+	assert := assert.New(t)
+	_, err := gollection.New([]int{0}).Filter(0).Result()
 	assert.Error(err)
 }
 
