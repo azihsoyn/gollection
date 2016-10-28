@@ -33,7 +33,7 @@ func (g *gollection) Filter(f interface{}) *gollection {
 	for i := 0; i < sv.Len(); i++ {
 		v := sv.Index(i)
 		if funcValue.Call([]reflect.Value{v})[0].Interface().(bool) {
-			ret = reflect.Append(ret, sv.Index(i))
+			ret = reflect.Append(ret, v)
 		}
 	}
 

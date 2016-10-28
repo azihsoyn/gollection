@@ -20,9 +20,8 @@ func (g *gollection) SortBy(f interface{}) *gollection {
 			err:   fmt.Errorf("gollection.SortBy called with non-slice value of type %T", g.slice),
 		}
 	}
-	orig := reflect.MakeSlice(sv.Type(), sv.Len(), sv.Cap())
 	ret := reflect.MakeSlice(sv.Type(), sv.Len(), sv.Cap())
-	reflect.Copy(orig, sv)
+	reflect.Copy(ret, sv)
 
 	funcValue := reflect.ValueOf(f)
 	funcType := funcValue.Type()
@@ -34,16 +33,14 @@ func (g *gollection) SortBy(f interface{}) *gollection {
 	}
 
 	less := func(i, j int) bool {
-		return funcValue.Call([]reflect.Value{sv.Index(i), sv.Index(j)})[0].Interface().(bool)
+		return funcValue.Call([]reflect.Value{ret.Index(i), ret.Index(j)})[0].Interface().(bool)
 	}
 
 	sort.Sort(&funcs{
 		length: sv.Len(),
 		less:   less,
-		swap:   reflectutil.Swapper(g.slice),
+		swap:   reflectutil.Swapper(ret.Interface()),
 	})
-	reflect.Copy(ret, sv)
-	reflect.Copy(sv, orig)
 
 	return &gollection{
 		slice: ret.Interface(),

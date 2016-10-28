@@ -23,9 +23,10 @@ func (g *gollection) Distinct() *gollection {
 
 	for i := 0; i < sv.Len(); i++ {
 		v := sv.Index(i)
-		if _, ok := m[v.Interface()]; !ok {
+		id := v.Interface()
+		if _, ok := m[id]; !ok {
 			ret = reflect.Append(ret, v)
-			m[v.Interface()] = true
+			m[id] = true
 		}
 	}
 
