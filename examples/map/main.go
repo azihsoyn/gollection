@@ -9,11 +9,8 @@ import (
 func main() {
 	arr := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 
-	res, _ := gollection.New(arr).Map(func(v interface{}) interface{} {
-		if n, ok := v.(int); ok {
-			return n * 2
-		}
-		return 0
+	res, _ := gollection.New(arr).Map(func(v int) int {
+		return v * 2
 	}).Result()
 	fmt.Println("origin : ", arr)
 	fmt.Println("ret    : ", res)

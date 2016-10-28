@@ -17,11 +17,8 @@ func TestFlatMap(t *testing.T) {
 	}
 	expect := []int{2, 4, 6, 8, 10, 12, 14, 16, 18, 20}
 
-	res, err := gollection.New(arr).FlatMap(func(v interface{}) interface{} {
-		if n, ok := v.(int); ok {
-			return n * 2
-		}
-		return 0
+	res, err := gollection.New(arr).FlatMap(func(v int) int {
+		return v * 2
 	}).Result()
 	assert.NoError(err)
 	assert.Equal(expect, res)
@@ -29,18 +26,18 @@ func TestFlatMap(t *testing.T) {
 
 func TestFlatMap_InterfaceSlice(t *testing.T) {
 	assert := assert.New(t)
-	arr := []interface{}{
-		[]int{1, 2, 3},
-		"a", "b",
+	arr := [][]interface{}{
+		[]interface{}{1, 2, 3},
+		[]interface{}{"a", "b"},
 		nil,
 	}
-	expect := []int{2, 4, 6}
+	expect := []interface{}{2, 4, 6, "a", "b"}
 
 	res, err := gollection.New(arr).FlatMap(func(v interface{}) interface{} {
 		if n, ok := v.(int); ok {
 			return n * 2
 		}
-		return 0
+		return v
 	}).Result()
 	assert.NoError(err)
 	assert.Equal(expect, res)
@@ -49,11 +46,25 @@ func TestFlatMap_InterfaceSlice(t *testing.T) {
 func TestFlatMap_EmptySlice(t *testing.T) {
 	assert := assert.New(t)
 	expect := []string{}
-	res, err := gollection.New([][]int{}).FlatMap(func(v interface{}) interface{} {
+	res, err := gollection.New([][]int{}).FlatMap(func(v int) string {
 		return ""
 	}).Result()
 	assert.NoError(err)
 	assert.Equal(expect, res)
+}
+
+func TestFlatMap_NotFunc(t *testing.T) {
+	assert := assert.New(t)
+	_, err := gollection.New([][]int{}).FlatMap(0).Result()
+	assert.Error(err)
+}
+
+func TestFlatMap_NonSliceOfSlice(t *testing.T) {
+	assert := assert.New(t)
+	_, err := gollection.New([]int{}).FlatMap(func(v int) string {
+		return ""
+	}).Result()
+	assert.Error(err)
 }
 
 func TestFlatMap_NotSlice(t *testing.T) {

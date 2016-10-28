@@ -5,7 +5,7 @@ import (
 	"reflect"
 )
 
-func (g *gollection) Reduce(f func(v1, v2 interface{}) interface{}) *gollection {
+func (g *gollection) Reduce(f interface{}) *gollection {
 	if g.err != nil {
 		return &gollection{err: g.err}
 	}
@@ -29,13 +29,23 @@ func (g *gollection) Reduce(f func(v1, v2 interface{}) interface{}) *gollection 
 		}
 	}
 
-	v1 := sv.Index(0).Interface()
+	funcValue := reflect.ValueOf(f)
+	funcType := funcValue.Type()
+	if funcType.Kind() != reflect.Func || funcType.NumIn() != 2 || funcType.NumOut() != 1 {
+		return &gollection{
+			slice: nil,
+			err:   fmt.Errorf("gollection.Reduce called with invalid func. required func(in1, in2 <T>) out <T> but supplied %v", g.slice),
+		}
+	}
+
+	ret := sv.Index(0).Interface()
 	for i := 1; i < sv.Len(); i++ {
-		v2 := sv.Index(i).Interface()
-		v1 = f(v1, v2)
+		v1 := reflect.ValueOf(ret)
+		v2 := sv.Index(i)
+		ret = funcValue.Call([]reflect.Value{v1, v2})[0].Interface()
 	}
 
 	return &gollection{
-		val: v1,
+		val: ret,
 	}
 }

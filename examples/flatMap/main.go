@@ -13,11 +13,8 @@ func main() {
 		{6, 7, 8, 9, 10},
 	}
 
-	res, _ := gollection.New(arr).FlatMap(func(v interface{}) interface{} {
-		if n, ok := v.(int); ok {
-			return n * 2
-		}
-		return 0
+	res, _ := gollection.New(arr).FlatMap(func(v int) int {
+		return v * 2
 	}).Result()
 	fmt.Println("origin : ", arr)
 	fmt.Println("ret    : ", res)

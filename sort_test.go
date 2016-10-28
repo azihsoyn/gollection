@@ -14,8 +14,8 @@ func TestSortBy(t *testing.T) {
 	original := make([]int, len(arr))
 	copy(original, arr)
 
-	res, err := gollection.New(arr).SortBy(func(v1, v2 interface{}) bool {
-		return v1.(int) < v2.(int)
+	res, err := gollection.New(arr).SortBy(func(v1, v2 int) bool {
+		return v1 < v2
 	}).Result()
 
 	assert.NoError(err)
@@ -23,12 +23,16 @@ func TestSortBy(t *testing.T) {
 	// check not changed
 	assert.Equal(original, arr)
 }
-
 func TestSort_NotSlice(t *testing.T) {
 	assert := assert.New(t)
 	_, err := gollection.New("not slice value").SortBy(func(v1, v2 interface{}) bool {
 		return false
 	}).Result()
+	assert.Error(err)
+}
+func TestSort_NotFunc(t *testing.T) {
+	assert := assert.New(t)
+	_, err := gollection.New([]int{0, 0, 0}).SortBy(0).Result()
 	assert.Error(err)
 }
 

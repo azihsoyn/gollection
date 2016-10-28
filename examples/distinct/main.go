@@ -26,8 +26,8 @@ func main() {
 		{ID: 6, Name: "Charles"},
 	}
 
-	res, _ = gollection.New(users).DistinctBy(func(v interface{}) interface{} {
-		return v.(user).Name
+	res, _ = gollection.New(users).DistinctBy(func(v user) string {
+		return v.Name
 	}).Result()
 	fmt.Println("origin : ", users)
 	fmt.Println("ret    : ", res)

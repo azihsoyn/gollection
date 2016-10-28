@@ -34,7 +34,7 @@ func (g *gollection) Distinct() *gollection {
 	}
 }
 
-func (g *gollection) DistinctBy(f func(v interface{}) interface{}) *gollection {
+func (g *gollection) DistinctBy(f interface{}) *gollection {
 	if g.err != nil {
 		return &gollection{err: g.err}
 	}
@@ -47,12 +47,22 @@ func (g *gollection) DistinctBy(f func(v interface{}) interface{}) *gollection {
 		}
 	}
 
-	ret := reflect.MakeSlice(sv.Type(), 0, sv.Len())
+	funcValue := reflect.ValueOf(f)
+	funcType := funcValue.Type()
+	if funcType.Kind() != reflect.Func || funcType.NumIn() != 1 || funcType.NumOut() != 1 {
+		return &gollection{
+			slice: nil,
+			err:   fmt.Errorf("gollection.DistinctBy called with invalid func. required func(in <T>) out <T> but supplied %v", g.slice),
+		}
+	}
+
+	resultSliceType := reflect.SliceOf(funcType.In(0))
+	ret := reflect.MakeSlice(resultSliceType, 0, sv.Len())
 	m := make(map[interface{}]bool)
 
 	for i := 0; i < sv.Len(); i++ {
 		v := sv.Index(i)
-		id := f(v.Interface())
+		id := funcValue.Call([]reflect.Value{v})[0].Interface()
 		if _, ok := m[id]; !ok {
 			ret = reflect.Append(ret, v)
 			m[id] = true

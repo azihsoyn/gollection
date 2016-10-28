@@ -34,18 +34,22 @@ func TestDistinctBy(t *testing.T) {
 	arr := []string{"aaa", "bb", "c", "ddd", "ee", "f"}
 	expect := []string{"aaa", "bb", "c"}
 
-	res, err := gollection.New(arr).DistinctBy(func(v interface{}) interface{} {
-		return len(v.(string))
+	res, err := gollection.New(arr).DistinctBy(func(v string) int {
+		return len(v)
 	}).Result()
 	assert.NoError(err)
 	assert.Equal(expect, res)
 }
-
 func TestDistinctBy_NotSlice(t *testing.T) {
 	assert := assert.New(t)
 	_, err := gollection.New("not slice value").DistinctBy(func(v interface{}) interface{} {
 		return v
 	}).Result()
+	assert.Error(err)
+}
+func TestDistinctBy_NotFunc(t *testing.T) {
+	assert := assert.New(t)
+	_, err := gollection.New([]int{}).DistinctBy(0).Result()
 	assert.Error(err)
 }
 
