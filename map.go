@@ -10,6 +10,14 @@ func (g *gollection) Map(f interface{}) *gollection {
 		return &gollection{err: g.err}
 	}
 
+	if g.ch != nil {
+		return g.mapStream(f)
+	}
+
+	return g.map_(f)
+}
+
+func (g *gollection) map_(f interface{}) *gollection {
 	sv := reflect.ValueOf(g.slice)
 	if sv.Kind() != reflect.Slice {
 		return &gollection{
@@ -45,4 +53,37 @@ func (g *gollection) Map(f interface{}) *gollection {
 	return &gollection{
 		slice: ret.Interface(),
 	}
+
+}
+
+func (g *gollection) mapStream(f interface{}) *gollection {
+	next := &gollection{
+		ch: make(chan interface{}),
+	}
+
+	funcValue := reflect.ValueOf(f)
+	funcType := funcValue.Type()
+	if funcType.Kind() != reflect.Func || funcType.NumIn() != 1 || funcType.NumOut() != 1 {
+		return &gollection{
+			err: fmt.Errorf("gollection.Map called with invalid func. required func(in <T>) out <T> but supplied %v", f),
+		}
+	}
+
+	go func() {
+		for {
+			select {
+			case v, ok := <-g.ch:
+				if ok {
+					v := funcValue.Call([]reflect.Value{reflect.ValueOf(v)})[0].Interface()
+					next.ch <- v
+				} else {
+					close(next.ch)
+					return
+				}
+			default:
+				continue
+			}
+		}
+	}()
+	return next
 }

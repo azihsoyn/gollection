@@ -10,6 +10,14 @@ func (g *gollection) Take(n int) *gollection {
 		return &gollection{err: g.err}
 	}
 
+	if g.ch != nil {
+		return g.takeStream(n)
+	}
+
+	return g.take(n)
+}
+
+func (g *gollection) take(n int) *gollection {
 	sv := reflect.ValueOf(g.slice)
 	if sv.Kind() != reflect.Slice {
 		return &gollection{
@@ -32,4 +40,29 @@ func (g *gollection) Take(n int) *gollection {
 	return &gollection{
 		slice: ret.Interface(),
 	}
+}
+
+func (g *gollection) takeStream(n int) *gollection {
+	next := &gollection{
+		ch: make(chan interface{}),
+	}
+
+	go func() {
+		i := 0
+		for {
+			select {
+			case v, ok := <-g.ch:
+				if ok && i < n {
+					next.ch <- v
+					i++
+				} else {
+					close(next.ch)
+					return
+				}
+			default:
+				continue
+			}
+		}
+	}()
+	return next
 }
