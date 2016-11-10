@@ -1,3 +1,6 @@
+/*
+Package gollection provides collection util to any type slices.
+*/
 package gollection
 
 import (
@@ -13,12 +16,14 @@ type gollection struct {
 	err   error
 }
 
+// New returns a gollection instance which can method chain *sequentially* specified by some type of slice.
 func New(slice interface{}) *gollection {
 	return &gollection{
 		slice: slice,
 	}
 }
 
+// Result return a collection processed value and error.
 func (g *gollection) Result() (interface{}, error) {
 	if g.ch != nil {
 		return g.resultStream()
@@ -62,6 +67,7 @@ func (g *gollection) resultStream() (interface{}, error) {
 	return ret.Interface(), nil
 }
 
+// NewStream returns a gollection instance which can method chain *parallel* specified by some type of slice.
 func NewStream(slice interface{}) *gollection {
 	next := &gollection{
 		ch: make(chan interface{}),
