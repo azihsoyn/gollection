@@ -10,6 +10,14 @@ func (g *gollection) FlatMap(f interface{}) *gollection {
 		return &gollection{err: g.err}
 	}
 
+	if g.ch != nil {
+		return g.flatMapStream(f)
+	}
+
+	return g.flatMap(f)
+}
+
+func (g *gollection) flatMap(f interface{}) *gollection {
 	sv := reflect.ValueOf(g.slice)
 	if sv.Kind() != reflect.Slice {
 		return &gollection{
@@ -59,4 +67,39 @@ func (g *gollection) FlatMap(f interface{}) *gollection {
 		slice: ret.Interface(),
 		err:   nil,
 	}
+}
+
+func (g *gollection) flatMapStream(f interface{}) *gollection {
+	next := &gollection{
+		ch: make(chan interface{}),
+	}
+
+	funcValue := reflect.ValueOf(f)
+	funcType := funcValue.Type()
+	if funcType.Kind() != reflect.Func || funcType.NumIn() != 1 || funcType.NumOut() != 1 {
+		return &gollection{
+			slice: nil,
+			err:   fmt.Errorf("gollection.FlatMap called with invalid func. required func(in <T>) out <T> but supplied %v", g.slice),
+		}
+	}
+	go func() {
+		for {
+			select {
+			case v, ok := <-g.ch:
+				if ok {
+					svv := reflect.ValueOf(v)
+					for j := 0; j < svv.Len(); j++ {
+						v := funcValue.Call([]reflect.Value{svv.Index(j)})[0]
+						next.ch <- v.Interface()
+					}
+				} else {
+					close(next.ch)
+					return
+				}
+			default:
+				continue
+			}
+		}
+	}()
+	return next
 }
