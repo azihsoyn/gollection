@@ -10,6 +10,13 @@ func (g *gollection) Flatten() *gollection {
 		return &gollection{err: g.err}
 	}
 
+	if g.ch != nil {
+		return g.flattenStream()
+	}
+	return g.flatten()
+}
+
+func (g *gollection) flatten() *gollection {
 	sv := reflect.ValueOf(g.slice)
 	if sv.Kind() != reflect.Slice {
 		return &gollection{
@@ -41,4 +48,30 @@ func (g *gollection) Flatten() *gollection {
 		slice: ret.Interface(),
 		err:   nil,
 	}
+}
+
+func (g *gollection) flattenStream() *gollection {
+	next := &gollection{
+		ch: make(chan interface{}),
+	}
+
+	go func() {
+		for {
+			select {
+			case v, ok := <-g.ch:
+				if ok {
+					svv := reflect.ValueOf(v)
+					for j := 0; j < svv.Len(); j++ {
+						next.ch <- svv.Index(j).Interface()
+					}
+				} else {
+					close(next.ch)
+					return
+				}
+			default:
+				continue
+			}
+		}
+	}()
+	return next
 }

@@ -9,6 +9,7 @@ func (g *gollection) Filter(f interface{}) *gollection {
 	if g.err != nil {
 		return &gollection{err: g.err}
 	}
+
 	if g.ch != nil {
 		return g.filterStream(f)
 	}
