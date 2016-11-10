@@ -116,8 +116,6 @@ func (g *gollection) sortByStream(f interface{}) *gollection {
 		close(next.ch)
 	}()
 	return next
-
-	return next
 }
 
 type funcs struct {
