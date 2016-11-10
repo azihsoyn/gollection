@@ -10,10 +10,8 @@ func Example_distinct() {
 	arr := []int{1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10}
 
 	res, err := gollection.New(arr).Distinct().Result()
-	fmt.Println(arr)
 	fmt.Println(res, err)
-	// Output: [1 1 2 2 3 3 4 4 5 5 6 6 7 7 8 8 9 9 10 10]
-	// [1 2 3 4 5 6 7 8 9 10] <nil>
+	// Output: [1 2 3 4 5 6 7 8 9 10] <nil>
 }
 
 func Example_filter() {
@@ -88,8 +86,10 @@ func Example_sort() {
 	res, err := gollection.New(arr).SortBy(func(v1, v2 int) bool {
 		return v1 < v2
 	}).Result()
+	fmt.Println(arr)
 	fmt.Println(res, err)
-	// Output: [1 1 2 2 3 3 4 4 5 5 6 6 7 7 8 8 9 9 10] <nil>
+	// Output: [1 2 3 4 5 6 7 8 9 10 9 8 7 6 5 4 3 2 1]
+	// [1 1 2 2 3 3 4 4 5 5 6 6 7 7 8 8 9 9 10] <nil>
 }
 
 func Example_take() {
