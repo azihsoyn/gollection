@@ -65,3 +65,62 @@ func TestDistinctBy_HavingError(t *testing.T) {
 		Result()
 	assert.Error(err)
 }
+
+func TestDistinct_Stream(t *testing.T) {
+	assert := assert.New(t)
+	arr := []int{1, 2, 3, 1, 2, 3}
+	expect := []int{1, 2, 3}
+
+	res, err := gollection.NewStream(arr).Distinct().Result()
+	assert.NoError(err)
+	assert.Equal(expect, res)
+}
+
+func TestDistinct_Stream_NotSlice(t *testing.T) {
+	assert := assert.New(t)
+	_, err := gollection.NewStream("not slice value").Distinct().Result()
+	assert.Error(err)
+}
+
+func TestDistinct_Stream_HavingError(t *testing.T) {
+	assert := assert.New(t)
+	_, err := gollection.NewStream("not slice value").Distinct().Distinct().Result()
+	assert.Error(err)
+}
+
+func TestDistinctBy_Stream(t *testing.T) {
+	assert := assert.New(t)
+	arr := []string{"aaa", "bb", "c", "ddd", "ee", "f"}
+	expect := []string{"aaa", "bb", "c"}
+
+	res, err := gollection.NewStream(arr).DistinctBy(func(v string) int {
+		return len(v)
+	}).Result()
+	assert.NoError(err)
+	assert.Equal(expect, res)
+}
+func TestDistinctBy_Stream_NotSlice(t *testing.T) {
+	assert := assert.New(t)
+	_, err := gollection.NewStream("not slice value").DistinctBy(func(v interface{}) interface{} {
+		return v
+	}).Result()
+	assert.Error(err)
+}
+func TestDistinctBy_Stream_NotFunc(t *testing.T) {
+	assert := assert.New(t)
+	_, err := gollection.NewStream([]int{}).DistinctBy(0).Result()
+	assert.Error(err)
+}
+
+func TestDistinctBy_Stream_HavingError(t *testing.T) {
+	assert := assert.New(t)
+	_, err := gollection.NewStream("not slice value").
+		DistinctBy(func(v interface{}) interface{} {
+			return v
+		}).
+		DistinctBy(func(v interface{}) interface{} {
+			return v
+		}).
+		Result()
+	assert.Error(err)
+}

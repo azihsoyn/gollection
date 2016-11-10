@@ -23,39 +23,11 @@ func (g *gollection) DistinctBy(f interface{}) *gollection {
 		return &gollection{err: g.err}
 	}
 
-	sv := reflect.ValueOf(g.slice)
-	if sv.Kind() != reflect.Slice {
-		return &gollection{
-			slice: nil,
-			err:   fmt.Errorf("gollection.DistinctBy called with non-slice value of type %T", g.slice),
-		}
+	if g.ch != nil {
+		return g.distinctByStream(f)
 	}
 
-	funcValue := reflect.ValueOf(f)
-	funcType := funcValue.Type()
-	if funcType.Kind() != reflect.Func || funcType.NumIn() != 1 || funcType.NumOut() != 1 {
-		return &gollection{
-			slice: nil,
-			err:   fmt.Errorf("gollection.DistinctBy called with invalid func. required func(in <T>) out <T> but supplied %v", g.slice),
-		}
-	}
-
-	resultSliceType := reflect.SliceOf(funcType.In(0))
-	ret := reflect.MakeSlice(resultSliceType, 0, sv.Len())
-	m := make(map[interface{}]bool)
-
-	for i := 0; i < sv.Len(); i++ {
-		v := sv.Index(i)
-		id := funcValue.Call([]reflect.Value{v})[0].Interface()
-		if _, ok := m[id]; !ok {
-			ret = reflect.Append(ret, v)
-			m[id] = true
-		}
-	}
-
-	return &gollection{
-		slice: ret.Interface(),
-	}
+	return g.distinctBy(f)
 }
 
 func (g *gollection) distinct() *gollection {
@@ -98,6 +70,79 @@ func (g *gollection) distinctStream() *gollection {
 					if _, ok := m[v]; !ok {
 						next.ch <- v
 						m[v] = true
+					}
+				} else {
+					close(next.ch)
+					return
+				}
+			default:
+				continue
+			}
+		}
+	}()
+	return next
+}
+
+func (g *gollection) distinctBy(f interface{}) *gollection {
+	sv := reflect.ValueOf(g.slice)
+	if sv.Kind() != reflect.Slice {
+		return &gollection{
+			slice: nil,
+			err:   fmt.Errorf("gollection.DistinctBy called with non-slice value of type %T", g.slice),
+		}
+	}
+
+	funcValue := reflect.ValueOf(f)
+	funcType := funcValue.Type()
+	if funcType.Kind() != reflect.Func || funcType.NumIn() != 1 || funcType.NumOut() != 1 {
+		return &gollection{
+			slice: nil,
+			err:   fmt.Errorf("gollection.DistinctBy called with invalid func. required func(in <T>) out <T> but supplied %v", g.slice),
+		}
+	}
+
+	resultSliceType := reflect.SliceOf(funcType.In(0))
+	ret := reflect.MakeSlice(resultSliceType, 0, sv.Len())
+	m := make(map[interface{}]bool)
+
+	for i := 0; i < sv.Len(); i++ {
+		v := sv.Index(i)
+		id := funcValue.Call([]reflect.Value{v})[0].Interface()
+		if _, ok := m[id]; !ok {
+			ret = reflect.Append(ret, v)
+			m[id] = true
+		}
+	}
+
+	return &gollection{
+		slice: ret.Interface(),
+	}
+}
+
+func (g *gollection) distinctByStream(f interface{}) *gollection {
+	next := &gollection{
+		ch: make(chan interface{}),
+	}
+
+	funcValue := reflect.ValueOf(f)
+	funcType := funcValue.Type()
+	if funcType.Kind() != reflect.Func || funcType.NumIn() != 1 || funcType.NumOut() != 1 {
+		return &gollection{
+			slice: nil,
+			err:   fmt.Errorf("gollection.DistinctBy called with invalid func. required func(in <T>) out <T> but supplied %v", g.slice),
+		}
+	}
+
+	m := make(map[interface{}]bool)
+	go func() {
+		for {
+			select {
+			case v, ok := <-g.ch:
+				if ok {
+					id := funcValue.Call([]reflect.Value{reflect.ValueOf(v)})[0].Interface()
+					if _, ok := m[id]; !ok {
+						next.ch <- v
+						m[id] = true
 					}
 				} else {
 					close(next.ch)
