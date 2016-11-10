@@ -79,11 +79,11 @@ func TestFlatMap_HavingError(t *testing.T) {
 	assert := assert.New(t)
 	_, err := gollection.New("not slice value").
 		FlatMap(func(v interface{}) interface{} {
-		return ""
-	}).
+			return ""
+		}).
 		FlatMap(func(v interface{}) interface{} {
-		return ""
-	}).
+			return ""
+		}).
 		Result()
 	assert.Error(err)
 }

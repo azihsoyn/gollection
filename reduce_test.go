@@ -53,11 +53,11 @@ func TestReduce_HavingError(t *testing.T) {
 	assert := assert.New(t)
 	_, err := gollection.New("not slice value").
 		Reduce(func(v1, v2 interface{}) interface{} {
-		return ""
-	}).
+			return ""
+		}).
 		Reduce(func(v1, v2 interface{}) interface{} {
-		return ""
-	}).
+			return ""
+		}).
 		Result()
 	assert.Error(err)
 }

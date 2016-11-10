@@ -40,11 +40,11 @@ func TestSort_HavingError(t *testing.T) {
 	assert := assert.New(t)
 	_, err := gollection.New("not slice value").
 		SortBy(func(v1, v2 interface{}) bool {
-		return false
-	}).
+			return false
+		}).
 		SortBy(func(v1, v2 interface{}) bool {
-		return false
-	}).
+			return false
+		}).
 		Result()
 	assert.Error(err)
 }

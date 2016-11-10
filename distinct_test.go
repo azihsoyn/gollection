@@ -57,11 +57,11 @@ func TestDistinctBy_HavingError(t *testing.T) {
 	assert := assert.New(t)
 	_, err := gollection.New("not slice value").
 		DistinctBy(func(v interface{}) interface{} {
-		return v
-	}).
+			return v
+		}).
 		DistinctBy(func(v interface{}) interface{} {
-		return v
-	}).
+			return v
+		}).
 		Result()
 	assert.Error(err)
 }

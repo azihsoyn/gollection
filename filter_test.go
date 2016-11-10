@@ -35,11 +35,11 @@ func TestFilter_HavingError(t *testing.T) {
 	assert := assert.New(t)
 	_, err := gollection.New("not slice value").
 		Filter(func(v interface{}) bool {
-		return true
-	}).
+			return true
+		}).
 		Filter(func(v interface{}) bool {
-		return true
-	}).
+			return true
+		}).
 		Result()
 	assert.Error(err)
 }

@@ -56,11 +56,11 @@ func TestMap_HavingError(t *testing.T) {
 	assert := assert.New(t)
 	_, err := gollection.New("not slice value").
 		Map(func(v interface{}) interface{} {
-		return ""
-	}).
+			return ""
+		}).
 		Map(func(v interface{}) interface{} {
-		return ""
-	}).
+			return ""
+		}).
 		Result()
 	assert.Error(err)
 }
