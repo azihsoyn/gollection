@@ -3,6 +3,7 @@ package gollection
 import (
 	"fmt"
 	"reflect"
+	"sync"
 )
 
 func (g *gollection) Reduce(f interface{}) *gollection {
@@ -59,10 +60,6 @@ func (g *gollection) reduce(f interface{}) *gollection {
 }
 
 func (g *gollection) reduceStream(f interface{}) *gollection {
-	next := &gollection{
-		ch: make(chan interface{}),
-	}
-
 	funcValue := reflect.ValueOf(f)
 	funcType := funcValue.Type()
 	if funcType.Kind() != reflect.Func || funcType.NumIn() != 2 || funcType.NumOut() != 1 {
@@ -72,32 +69,37 @@ func (g *gollection) reduceStream(f interface{}) *gollection {
 		}
 	}
 
-	go func() {
-		var ret interface{}
+	var ret interface{}
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func(wg *sync.WaitGroup, ret *interface{}) {
 		var initialized bool
 
 		for {
 			select {
 			case v, ok := <-g.ch:
 				if !initialized {
-					ret = reflect.ValueOf(v).Interface()
+					*ret = reflect.ValueOf(v).Interface()
 					initialized = true
 					continue
 				}
 
 				if ok {
-					v1 := reflect.ValueOf(ret)
+					v1 := reflect.ValueOf(*ret)
 					v2 := reflect.ValueOf(v)
-					ret = funcValue.Call([]reflect.Value{v1, v2})[0].Interface()
+					*ret = funcValue.Call([]reflect.Value{v1, v2})[0].Interface()
 				} else {
-					next.ch <- ret
-					close(next.ch)
+					(*wg).Done()
 					return
 				}
 			default:
 				continue
 			}
 		}
-	}()
-	return next
+	}(&wg, &ret)
+	wg.Wait()
+
+	return &gollection{
+		val: ret,
+	}
 }

@@ -3,6 +3,7 @@ package gollection
 import (
 	"fmt"
 	"reflect"
+	"sync"
 )
 
 func (g *gollection) Fold(v0 interface{}, f interface{}) *gollection {
@@ -55,10 +56,6 @@ func (g *gollection) fold(v0 interface{}, f interface{}) *gollection {
 }
 
 func (g *gollection) foldStream(v0 interface{}, f interface{}) *gollection {
-	next := &gollection{
-		ch: make(chan interface{}),
-	}
-
 	funcValue := reflect.ValueOf(f)
 	funcType := funcValue.Type()
 	if funcType.Kind() != reflect.Func || funcType.NumIn() != 2 || funcType.NumOut() != 1 {
@@ -68,26 +65,32 @@ func (g *gollection) foldStream(v0 interface{}, f interface{}) *gollection {
 		}
 	}
 
-	go func() {
-		ret := v0
+	var ret interface{}
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func(wg *sync.WaitGroup, ret *interface{}) {
+		*ret = v0
 
 		for {
 			select {
 			case v, ok := <-g.ch:
 				if ok {
-					v1 := reflect.ValueOf(ret)
+					v1 := reflect.ValueOf(*ret)
 					v2 := reflect.ValueOf(v)
-					ret = funcValue.Call([]reflect.Value{v1, v2})[0].Interface()
+					*ret = funcValue.Call([]reflect.Value{v1, v2})[0].Interface()
 				} else {
-					next.ch <- ret
-					close(next.ch)
+					(*wg).Done()
 					return
 				}
 			default:
 				continue
 			}
 		}
-	}()
-	return next
+	}(&wg, &ret)
+	wg.Wait()
+
+	return &gollection{
+		val: ret,
+	}
 
 }

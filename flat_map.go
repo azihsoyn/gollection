@@ -3,6 +3,8 @@ package gollection
 import (
 	"fmt"
 	"reflect"
+
+	"github.com/kr/pretty"
 )
 
 func (g *gollection) FlatMap(f interface{}) *gollection {
@@ -90,6 +92,7 @@ func (g *gollection) flatMapStream(f interface{}) *gollection {
 					svv := reflect.ValueOf(v)
 					for j := 0; j < svv.Len(); j++ {
 						v := funcValue.Call([]reflect.Value{svv.Index(j)})[0]
+						pretty.Println(v.Interface())
 						next.ch <- v.Interface()
 					}
 				} else {
