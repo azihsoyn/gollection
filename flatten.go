@@ -55,11 +55,23 @@ func (g *gollection) flattenStream() *gollection {
 		ch: make(chan interface{}),
 	}
 
+	var initialized bool
 	go func() {
 		for {
 			select {
 			case v, ok := <-g.ch:
 				if ok {
+					// initialze next stream type
+					if !initialized {
+						currentType := v.(reflect.Type).Elem()
+						if currentType.Kind() != reflect.Slice {
+							next.ch <- fmt.Errorf("gollection.Flatten called with non-slice-of-slice value of type %s", currentType)
+						}
+						next.ch <- currentType
+						initialized = true
+						continue
+					}
+
 					svv := reflect.ValueOf(v)
 					for j := 0; j < svv.Len(); j++ {
 						next.ch <- svv.Index(j).Interface()

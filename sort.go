@@ -73,18 +73,28 @@ func (g *gollection) sortByStream(f interface{}) *gollection {
 
 	var ret reflect.Value
 	var initialized bool
+	var skippedFirst bool
+	var currentType reflect.Type
 
 	wg := sync.WaitGroup{}
 	wg.Add(1)
-	go func() {
+	go func(wg *sync.WaitGroup, currentType *reflect.Type) {
 		for {
 			select {
 			case v, ok := <-g.ch:
 				if ok {
+					if !skippedFirst {
+						skippedFirst = true
+						*currentType = v.(reflect.Type)
+						continue
+					}
+
+					// initialze next stream type
 					if !initialized {
 						ret = reflect.MakeSlice(reflect.SliceOf(reflect.ValueOf(v).Type()), 0, 0)
 						initialized = true
 					}
+
 					ret = reflect.Append(ret, reflect.ValueOf(v))
 				} else {
 					wg.Done()
@@ -94,7 +104,7 @@ func (g *gollection) sortByStream(f interface{}) *gollection {
 				continue
 			}
 		}
-	}()
+	}(&wg, &currentType)
 	wg.Wait()
 
 	less := func(i, j int) bool {
@@ -110,6 +120,9 @@ func (g *gollection) sortByStream(f interface{}) *gollection {
 	})
 
 	go func() {
+		// initialze next stream type
+		next.ch <- currentType
+
 		for i := 0; i < sv.Len(); i++ {
 			next.ch <- sv.Index(i).Interface()
 		}

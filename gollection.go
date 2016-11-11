@@ -41,17 +41,24 @@ func (g *gollection) result() (interface{}, error) {
 func (g *gollection) resultStream() (interface{}, error) {
 	var ret reflect.Value
 	var initialized bool
+	var err error
 
 	wg := sync.WaitGroup{}
 	wg.Add(1)
-	go func() {
+	go func(err *error) {
 		for {
 			select {
 			case v, ok := <-g.ch:
 				if ok {
+					if e, ok := v.(error); ok {
+						*err = e
+						wg.Done()
+						return
+					}
 					if !initialized {
-						ret = reflect.MakeSlice(reflect.SliceOf(reflect.ValueOf(v).Type()), 0, 0)
+						ret = reflect.MakeSlice(v.(reflect.Type), 0, 0)
 						initialized = true
+						continue
 					}
 					ret = reflect.Append(ret, reflect.ValueOf(v))
 				} else {
@@ -62,8 +69,13 @@ func (g *gollection) resultStream() (interface{}, error) {
 				continue
 			}
 		}
-	}()
+	}(&err)
 	wg.Wait()
+
+	if err != nil {
+		return nil, err
+	}
+
 	return ret.Interface(), nil
 }
 
@@ -81,6 +93,9 @@ func NewStream(slice interface{}) *gollection {
 	}
 
 	go func() {
+		// initialze next stream type
+		next.ch <- sv.Type()
+
 		for i := 0; i < sv.Len(); i++ {
 			next.ch <- sv.Index(i).Interface()
 		}

@@ -62,11 +62,19 @@ func (g *gollection) filterStream(f interface{}) *gollection {
 		}
 	}
 
+	var initialized bool
 	go func() {
 		for {
 			select {
 			case v, ok := <-g.ch:
 				if ok {
+					if !initialized {
+						// initialize next stream type
+						next.ch <- reflect.SliceOf(funcType.In(0))
+						initialized = true
+						continue
+					}
+
 					if funcValue.Call([]reflect.Value{reflect.ValueOf(v)})[0].Interface().(bool) {
 						next.ch <- v
 					}

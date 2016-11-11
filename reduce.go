@@ -70,25 +70,40 @@ func (g *gollection) reduceStream(f interface{}) *gollection {
 	}
 
 	var ret interface{}
+	var err error
 	wg := sync.WaitGroup{}
 	wg.Add(1)
-	go func(wg *sync.WaitGroup, ret *interface{}) {
+	go func(wg *sync.WaitGroup, ret *interface{}, err *error) {
 		var initialized bool
+		var skippedFirst bool
+		var itemNum int
+		var currentType reflect.Type
 
 		for {
 			select {
 			case v, ok := <-g.ch:
-				if !initialized {
-					*ret = reflect.ValueOf(v).Interface()
-					initialized = true
-					continue
-				}
-
 				if ok {
+					// skip first item(reflect.Type)
+					if !skippedFirst {
+						skippedFirst = true
+						currentType = v.(reflect.Type)
+						continue
+					}
+
+					if !initialized {
+						itemNum++
+						*ret = reflect.ValueOf(v).Interface()
+						initialized = true
+						continue
+					}
+
 					v1 := reflect.ValueOf(*ret)
 					v2 := reflect.ValueOf(v)
 					*ret = funcValue.Call([]reflect.Value{v1, v2})[0].Interface()
 				} else {
+					if itemNum == 0 {
+						*err = fmt.Errorf("gollection.Reduce called with empty slice of type %s", currentType)
+					}
 					(*wg).Done()
 					return
 				}
@@ -96,8 +111,14 @@ func (g *gollection) reduceStream(f interface{}) *gollection {
 				continue
 			}
 		}
-	}(&wg, &ret)
+	}(&wg, &ret, &err)
 	wg.Wait()
+
+	if err != nil {
+		return &gollection{
+			err: err,
+		}
+	}
 
 	return &gollection{
 		val: ret,

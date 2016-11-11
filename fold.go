@@ -66,6 +66,7 @@ func (g *gollection) foldStream(v0 interface{}, f interface{}) *gollection {
 	}
 
 	var ret interface{}
+	var initialized bool
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	go func(wg *sync.WaitGroup, ret *interface{}) {
@@ -75,6 +76,12 @@ func (g *gollection) foldStream(v0 interface{}, f interface{}) *gollection {
 			select {
 			case v, ok := <-g.ch:
 				if ok {
+					// skip first item(reflect.Type)
+					if !initialized {
+						initialized = true
+						continue
+					}
+
 					v1 := reflect.ValueOf(*ret)
 					v2 := reflect.ValueOf(v)
 					*ret = funcValue.Call([]reflect.Value{v1, v2})[0].Interface()

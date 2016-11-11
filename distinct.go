@@ -61,12 +61,20 @@ func (g *gollection) distinctStream() *gollection {
 		ch: make(chan interface{}),
 	}
 
+	var initialized bool
 	m := make(map[interface{}]bool)
 	go func() {
 		for {
 			select {
 			case v, ok := <-g.ch:
 				if ok {
+					if !initialized {
+						// initialize next stream type
+						next.ch <- v.(reflect.Type)
+						initialized = true
+						continue
+					}
+
 					if _, ok := m[v]; !ok {
 						next.ch <- v
 						m[v] = true
@@ -133,12 +141,20 @@ func (g *gollection) distinctByStream(f interface{}) *gollection {
 		}
 	}
 
+	var initialized bool
 	m := make(map[interface{}]bool)
 	go func() {
 		for {
 			select {
 			case v, ok := <-g.ch:
 				if ok {
+					if !initialized {
+						// initialize next stream type
+						next.ch <- v.(reflect.Type)
+						initialized = true
+						continue
+					}
+
 					id := funcValue.Call([]reflect.Value{reflect.ValueOf(v)})[0].Interface()
 					if _, ok := m[id]; !ok {
 						next.ch <- v

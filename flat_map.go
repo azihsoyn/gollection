@@ -3,8 +3,6 @@ package gollection
 import (
 	"fmt"
 	"reflect"
-
-	"github.com/kr/pretty"
 )
 
 func (g *gollection) FlatMap(f interface{}) *gollection {
@@ -84,15 +82,27 @@ func (g *gollection) flatMapStream(f interface{}) *gollection {
 			err:   fmt.Errorf("gollection.FlatMap called with invalid func. required func(in <T>) out <T> but supplied %v", g.slice),
 		}
 	}
+
+	var initialized bool
 	go func() {
 		for {
 			select {
 			case v, ok := <-g.ch:
 				if ok {
+					if !initialized {
+						// initialze next stream type
+						currentType := v.(reflect.Type).Elem()
+						if currentType.Kind() != reflect.Slice {
+							next.ch <- fmt.Errorf("gollection.FlatMap called with non-slice-of-slice value of type %s", currentType)
+						}
+						next.ch <- reflect.SliceOf(funcType.Out(0))
+						initialized = true
+						continue
+					}
+
 					svv := reflect.ValueOf(v)
 					for j := 0; j < svv.Len(); j++ {
 						v := funcValue.Call([]reflect.Value{svv.Index(j)})[0]
-						pretty.Println(v.Interface())
 						next.ch <- v.Interface()
 					}
 				} else {
@@ -104,5 +114,6 @@ func (g *gollection) flatMapStream(f interface{}) *gollection {
 			}
 		}
 	}()
+
 	return next
 }

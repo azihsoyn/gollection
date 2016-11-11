@@ -47,11 +47,19 @@ func (g *gollection) takeStream(n int) *gollection {
 		ch: make(chan interface{}),
 	}
 
+	var initialized bool
 	go func() {
 		i := 0
 		for {
 			select {
 			case v, ok := <-g.ch:
+				// initialize next stream type
+				if ok && !initialized {
+					next.ch <- v
+					initialized = true
+					continue
+				}
+
 				if ok && i < n {
 					next.ch <- v
 					i++
