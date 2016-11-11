@@ -2,6 +2,7 @@ package gollection_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/azihsoyn/gollection"
 	"github.com/stretchr/testify/assert"
@@ -48,7 +49,10 @@ func TestTake_Stream(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal(expect, res)
 
-	gollection.NewStream(arr).Take(30)
+	gollection.NewStream(arr).Filter(func(v int) bool {
+		time.Sleep(1)
+		return true
+	}).Take(100)
 }
 
 func TestTake_Stream_NotSlice(t *testing.T) {
