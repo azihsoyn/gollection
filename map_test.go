@@ -75,6 +75,10 @@ func TestMap_Stream(t *testing.T) {
 	}).Result()
 	assert.NoError(err)
 	assert.Equal(expect, res)
+
+	gollection.NewStream(arr).Map(func(v int) int {
+		return v * 2
+	})
 }
 
 func TestMap_Stream_WithCast(t *testing.T) {

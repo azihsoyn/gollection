@@ -47,6 +47,8 @@ func TestTake_Stream(t *testing.T) {
 	res, err = gollection.NewStream(arr).Take(30).Result()
 	assert.NoError(err)
 	assert.Equal(expect, res)
+
+	gollection.NewStream(arr).Take(30)
 }
 
 func TestTake_Stream_NotSlice(t *testing.T) {
