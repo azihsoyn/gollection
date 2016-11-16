@@ -17,20 +17,14 @@ func (g *gollection) Flatten() *gollection {
 }
 
 func (g *gollection) flatten() *gollection {
-	sv := reflect.ValueOf(g.slice)
-	if sv.Kind() != reflect.Slice {
-		return &gollection{
-			slice: nil,
-			err:   fmt.Errorf("gollection.Flatten called with non-slice value of type %T", g.slice),
-		}
+	sv, err := g.validateSlice("Flatten")
+	if err != nil {
+		return &gollection{err: err}
 	}
 
-	currentType := reflect.TypeOf(g.slice).Elem()
-	if currentType.Kind() != reflect.Slice {
-		return &gollection{
-			slice: nil,
-			err:   fmt.Errorf("gollection.Flatten called with non-slice-of-slice value of type %T", g.slice),
-		}
+	currentType, err := g.validateSliceOfSlice("Flatten")
+	if err != nil {
+		return &gollection{err: err}
 	}
 
 	// init

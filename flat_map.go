@@ -32,7 +32,7 @@ func (g *gollection) flatMap(f interface{}) *gollection {
 		return &gollection{err: err}
 	}
 
-	if err := g.validateSliceOfSlice("FlatMap"); err != nil {
+	if _, err := g.validateSliceOfSlice("FlatMap"); err != nil {
 		return &gollection{err: err}
 	}
 
