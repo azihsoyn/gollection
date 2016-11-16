@@ -16,21 +16,35 @@ func (g *gollection) Filter(f interface{}) *gollection {
 	return g.filter(f)
 }
 
-func (g *gollection) filter(f interface{}) *gollection {
-	sv := reflect.ValueOf(g.slice)
-	if sv.Kind() != reflect.Slice {
-		return &gollection{
-			slice: nil,
-			err:   fmt.Errorf("gollection.Filter called with non-slice value of type %T", g.slice),
-		}
-	}
-
+func (g *gollection) validateFilterFunc(f interface{}) (reflect.Value, reflect.Type, error) {
 	funcValue := reflect.ValueOf(f)
 	funcType := funcValue.Type()
 	if funcType.Kind() != reflect.Func || funcType.NumIn() != 1 || funcType.NumOut() != 1 || funcType.Out(0).Kind() != reflect.Bool {
+		return reflect.Value{}, nil, fmt.Errorf("gollection.Filter called with invalid func. required func(in <T>) bool but supplied %v", funcType)
+	}
+	return funcValue, funcType, nil
+}
+
+func (g *gollection) validateSlice(funcName string) (reflect.Value, error) {
+	sv := reflect.ValueOf(g.slice)
+	if sv.Kind() != reflect.Slice {
+		return reflect.Value{}, fmt.Errorf("gollection.%s called with non-slice value of type %T", funcName, g.slice)
+	}
+	return sv, nil
+}
+
+func (g *gollection) filter(f interface{}) *gollection {
+	sv, err := g.validateSlice("Filter")
+	if err != nil {
 		return &gollection{
-			slice: nil,
-			err:   fmt.Errorf("gollection.Filter called with invalid func. required func(in <T>) bool but supplied %v", g.slice),
+			err: err,
+		}
+	}
+
+	funcValue, funcType, err := g.validateFilterFunc(f)
+	if err != nil {
+		return &gollection{
+			err: err,
 		}
 	}
 
@@ -54,11 +68,10 @@ func (g *gollection) filterStream(f interface{}) *gollection {
 		ch: make(chan interface{}),
 	}
 
-	funcValue := reflect.ValueOf(f)
-	funcType := funcValue.Type()
-	if funcType.Kind() != reflect.Func || funcType.NumIn() != 1 || funcType.NumOut() != 1 || funcType.Out(0).Kind() != reflect.Bool {
+	funcValue, funcType, err := g.validateFilterFunc(f)
+	if err != nil {
 		return &gollection{
-			err: fmt.Errorf("gollection.Filter called with invalid func. required func(in <T>) bool but supplied %v", f),
+			err: err,
 		}
 	}
 
