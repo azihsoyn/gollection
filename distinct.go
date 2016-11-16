@@ -31,12 +31,9 @@ func (g *gollection) DistinctBy(f interface{}) *gollection {
 }
 
 func (g *gollection) distinct() *gollection {
-	sv := reflect.ValueOf(g.slice)
-	if sv.Kind() != reflect.Slice {
-		return &gollection{
-			slice: nil,
-			err:   fmt.Errorf("gollection.Distinct called with non-slice value of type %T", g.slice),
-		}
+	sv, err := g.validateSlice("Distinct")
+	if err != nil {
+		return &gollection{err: err}
 	}
 
 	ret := reflect.MakeSlice(sv.Type(), 0, sv.Len())
@@ -91,22 +88,24 @@ func (g *gollection) distinctStream() *gollection {
 	return next
 }
 
-func (g *gollection) distinctBy(f interface{}) *gollection {
-	sv := reflect.ValueOf(g.slice)
-	if sv.Kind() != reflect.Slice {
-		return &gollection{
-			slice: nil,
-			err:   fmt.Errorf("gollection.DistinctBy called with non-slice value of type %T", g.slice),
-		}
-	}
-
+func (g *gollection) validateDistinctByFunc(f interface{}) (reflect.Value, reflect.Type, error) {
 	funcValue := reflect.ValueOf(f)
 	funcType := funcValue.Type()
 	if funcType.Kind() != reflect.Func || funcType.NumIn() != 1 || funcType.NumOut() != 1 {
-		return &gollection{
-			slice: nil,
-			err:   fmt.Errorf("gollection.DistinctBy called with invalid func. required func(in <T>) out <T> but supplied %v", g.slice),
-		}
+		return reflect.Value{}, nil, fmt.Errorf("gollection.DistinctBy called with invalid func. required func(in <T>) out <T> but supplied %v", funcType)
+	}
+	return funcValue, funcType, nil
+}
+
+func (g *gollection) distinctBy(f interface{}) *gollection {
+	sv, err := g.validateSlice("DistinctBy")
+	if err != nil {
+		return &gollection{err: err}
+	}
+
+	funcValue, funcType, err := g.validateDistinctByFunc(f)
+	if err != nil {
+		return &gollection{err: err}
 	}
 
 	resultSliceType := reflect.SliceOf(funcType.In(0))
@@ -132,13 +131,9 @@ func (g *gollection) distinctByStream(f interface{}) *gollection {
 		ch: make(chan interface{}),
 	}
 
-	funcValue := reflect.ValueOf(f)
-	funcType := funcValue.Type()
-	if funcType.Kind() != reflect.Func || funcType.NumIn() != 1 || funcType.NumOut() != 1 {
-		return &gollection{
-			slice: nil,
-			err:   fmt.Errorf("gollection.DistinctBy called with invalid func. required func(in <T>) out <T> but supplied %v", g.slice),
-		}
+	funcValue, _, err := g.validateDistinctByFunc(f)
+	if err != nil {
+		return &gollection{err: err}
 	}
 
 	var initialized bool

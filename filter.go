@@ -19,33 +19,24 @@ func (g *gollection) Filter(f interface{}) *gollection {
 func (g *gollection) validateFilterFunc(f interface{}) (reflect.Value, reflect.Type, error) {
 	funcValue := reflect.ValueOf(f)
 	funcType := funcValue.Type()
-	if funcType.Kind() != reflect.Func || funcType.NumIn() != 1 || funcType.NumOut() != 1 || funcType.Out(0).Kind() != reflect.Bool {
+	if funcType.Kind() != reflect.Func ||
+		funcType.NumIn() != 1 ||
+		funcType.NumOut() != 1 ||
+		funcType.Out(0).Kind() != reflect.Bool {
 		return reflect.Value{}, nil, fmt.Errorf("gollection.Filter called with invalid func. required func(in <T>) bool but supplied %v", funcType)
 	}
 	return funcValue, funcType, nil
 }
 
-func (g *gollection) validateSlice(funcName string) (reflect.Value, error) {
-	sv := reflect.ValueOf(g.slice)
-	if sv.Kind() != reflect.Slice {
-		return reflect.Value{}, fmt.Errorf("gollection.%s called with non-slice value of type %T", funcName, g.slice)
-	}
-	return sv, nil
-}
-
 func (g *gollection) filter(f interface{}) *gollection {
 	sv, err := g.validateSlice("Filter")
 	if err != nil {
-		return &gollection{
-			err: err,
-		}
+		return &gollection{err: err}
 	}
 
 	funcValue, funcType, err := g.validateFilterFunc(f)
 	if err != nil {
-		return &gollection{
-			err: err,
-		}
+		return &gollection{err: err}
 	}
 
 	resultSliceType := reflect.SliceOf(funcType.In(0))

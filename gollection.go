@@ -23,6 +23,14 @@ func New(slice interface{}) *gollection {
 	}
 }
 
+func (g *gollection) validateSlice(funcName string) (reflect.Value, error) {
+	sv := reflect.ValueOf(g.slice)
+	if sv.Kind() != reflect.Slice {
+		return reflect.Value{}, fmt.Errorf("gollection.%s called with non-slice value of type %T", funcName, g.slice)
+	}
+	return sv, nil
+}
+
 // Result return a collection processed value and error.
 func (g *gollection) Result() (interface{}, error) {
 	if g.ch != nil {
