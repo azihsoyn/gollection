@@ -1,11 +1,8 @@
 package gollection
 
-import (
-	"fmt"
-	"reflect"
-)
+import "reflect"
 
-func (g *gollection) Map(f interface{}) *gollection {
+func (g *gollection) Map(f /* func(v <T1>) <T2> */ interface{}) *gollection {
 	if g.err != nil {
 		return &gollection{err: g.err}
 	}
@@ -15,17 +12,6 @@ func (g *gollection) Map(f interface{}) *gollection {
 	}
 
 	return g.map_(f)
-}
-
-func (g *gollection) validateMapFunc(f /* func(v <T1>) <T2> */ interface{}) (reflect.Value, reflect.Type, error) {
-	funcValue := reflect.ValueOf(f)
-	funcType := funcValue.Type()
-	if funcType.Kind() != reflect.Func ||
-		funcType.NumIn() != 1 ||
-		funcType.NumOut() != 1 {
-		return reflect.Value{}, nil, fmt.Errorf("gollection.Map called with invalid func. required func(in <T>) out <T> but supplied %v", funcType)
-	}
-	return funcValue, funcType, nil
 }
 
 func (g *gollection) map_(f interface{}) *gollection {
@@ -51,7 +37,7 @@ func (g *gollection) map_(f interface{}) *gollection {
 	}
 
 	for i := 0; i < sv.Len(); i++ {
-		v := funcValue.Call([]reflect.Value{sv.Index(i)})[0]
+		v := processMapFunc(funcValue, sv.Index(i))
 		ret = reflect.Append(ret, v)
 	}
 
@@ -84,7 +70,7 @@ func (g *gollection) mapStream(f interface{}) *gollection {
 						continue
 					}
 
-					v := funcValue.Call([]reflect.Value{reflect.ValueOf(v)})[0].Interface()
+					v := processMapFunc(funcValue, reflect.ValueOf(v)).Interface()
 					next.ch <- v
 				} else {
 					close(next.ch)

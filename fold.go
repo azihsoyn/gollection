@@ -1,7 +1,6 @@
 package gollection
 
 import (
-	"fmt"
 	"reflect"
 	"sync"
 )
@@ -16,17 +15,6 @@ func (g *gollection) Fold(v0 interface{}, f /* func(v1, v2 <T>) <T> */ interface
 	}
 
 	return g.fold(v0, f)
-}
-
-func (g *gollection) validateFoldFunc(f interface{}) (reflect.Value, reflect.Type, error) {
-	funcValue := reflect.ValueOf(f)
-	funcType := funcValue.Type()
-	if funcType.Kind() != reflect.Func ||
-		funcType.NumIn() != 2 ||
-		funcType.NumOut() != 1 {
-		return reflect.Value{}, nil, fmt.Errorf("gollection.Fold called with invalid func. required func(in1, in2 <T>) out <T> but supplied %v", funcType)
-	}
-	return funcValue, funcType, nil
 }
 
 func (g *gollection) fold(v0 interface{}, f interface{}) *gollection {
@@ -48,7 +36,7 @@ func (g *gollection) fold(v0 interface{}, f interface{}) *gollection {
 	for i := 0; i < sv.Len(); i++ {
 		v1 := reflect.ValueOf(ret)
 		v2 := sv.Index(i)
-		ret = funcValue.Call([]reflect.Value{v1, v2})[0].Interface()
+		ret = processReduceFunc(funcValue, v1, v2).Interface()
 	}
 
 	return &gollection{
@@ -82,7 +70,7 @@ func (g *gollection) foldStream(v0 interface{}, f interface{}) *gollection {
 
 					v1 := reflect.ValueOf(*ret)
 					v2 := reflect.ValueOf(v)
-					*ret = funcValue.Call([]reflect.Value{v1, v2})[0].Interface()
+					*ret = processReduceFunc(funcValue, v1, v2).Interface()
 				} else {
 					(*wg).Done()
 					return

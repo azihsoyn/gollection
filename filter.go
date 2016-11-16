@@ -1,11 +1,8 @@
 package gollection
 
-import (
-	"fmt"
-	"reflect"
-)
+import "reflect"
 
-func (g *gollection) Filter(f interface{}) *gollection {
+func (g *gollection) Filter(f /* func(v <T>) bool */ interface{}) *gollection {
 	if g.err != nil {
 		return &gollection{err: g.err}
 	}
@@ -14,18 +11,6 @@ func (g *gollection) Filter(f interface{}) *gollection {
 		return g.filterStream(f)
 	}
 	return g.filter(f)
-}
-
-func (g *gollection) validateFilterFunc(f /* func(v <T>) bool */ interface{}) (reflect.Value, reflect.Type, error) {
-	funcValue := reflect.ValueOf(f)
-	funcType := funcValue.Type()
-	if funcType.Kind() != reflect.Func ||
-		funcType.NumIn() != 1 ||
-		funcType.NumOut() != 1 ||
-		funcType.Out(0).Kind() != reflect.Bool {
-		return reflect.Value{}, nil, fmt.Errorf("gollection.Filter called with invalid func. required func(in <T>) bool but supplied %v", funcType)
-	}
-	return funcValue, funcType, nil
 }
 
 func (g *gollection) filter(f interface{}) *gollection {
@@ -44,7 +29,7 @@ func (g *gollection) filter(f interface{}) *gollection {
 
 	for i := 0; i < sv.Len(); i++ {
 		v := sv.Index(i)
-		if funcValue.Call([]reflect.Value{v})[0].Interface().(bool) {
+		if processFilter(funcValue, v) {
 			ret = reflect.Append(ret, v)
 		}
 	}
@@ -79,7 +64,7 @@ func (g *gollection) filterStream(f interface{}) *gollection {
 						continue
 					}
 
-					if funcValue.Call([]reflect.Value{reflect.ValueOf(v)})[0].Interface().(bool) {
+					if processFilter(funcValue, reflect.ValueOf(v)) {
 						next.ch <- v
 					}
 				} else {

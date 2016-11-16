@@ -18,17 +18,6 @@ func (g *gollection) Reduce(f /* func(v1, v2 <T>) <T> */ interface{}) *gollectio
 	return g.reduce(f)
 }
 
-func (g *gollection) validateReduceFunc(f interface{}) (reflect.Value, reflect.Type, error) {
-	funcValue := reflect.ValueOf(f)
-	funcType := funcValue.Type()
-	if funcType.Kind() != reflect.Func ||
-		funcType.NumIn() != 2 ||
-		funcType.NumOut() != 1 {
-		return reflect.Value{}, nil, fmt.Errorf("gollection.Reduce called with invalid func. required func(in1, in2 <T>) out <T> but supplied %v", funcType)
-	}
-	return funcValue, funcType, nil
-}
-
 func (g *gollection) reduce(f interface{}) *gollection {
 	sv, err := g.validateSlice("Reduce")
 	if err != nil {
@@ -55,7 +44,7 @@ func (g *gollection) reduce(f interface{}) *gollection {
 	for i := 1; i < sv.Len(); i++ {
 		v1 := reflect.ValueOf(ret)
 		v2 := sv.Index(i)
-		ret = funcValue.Call([]reflect.Value{v1, v2})[0].Interface()
+		ret = processReduceFunc(funcValue, v1, v2).Interface()
 	}
 
 	return &gollection{
@@ -98,7 +87,7 @@ func (g *gollection) reduceStream(f interface{}) *gollection {
 
 					v1 := reflect.ValueOf(*ret)
 					v2 := reflect.ValueOf(v)
-					*ret = funcValue.Call([]reflect.Value{v1, v2})[0].Interface()
+					*ret = processReduceFunc(funcValue, v1, v2).Interface()
 				} else {
 					if itemNum == 0 {
 						*err = fmt.Errorf("gollection.Reduce called with empty slice of type %s", currentType)

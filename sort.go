@@ -1,12 +1,8 @@
 package gollection
 
 import (
-	"fmt"
 	"reflect"
-	"sort"
 	"sync"
-
-	"go4.org/reflectutil"
 )
 
 func (g *gollection) SortBy(f /* func(v1, v2 <T>) bool */ interface{}) *gollection {
@@ -19,18 +15,6 @@ func (g *gollection) SortBy(f /* func(v1, v2 <T>) bool */ interface{}) *gollecti
 	}
 
 	return g.sortBy(f)
-}
-
-func (g *gollection) validateSortByFunc(f interface{}) (reflect.Value, reflect.Type, error) {
-	funcValue := reflect.ValueOf(f)
-	funcType := funcValue.Type()
-	if funcType.Kind() != reflect.Func ||
-		funcType.NumIn() != 2 ||
-		funcType.NumOut() != 1 ||
-		funcType.Out(0).Kind() != reflect.Bool {
-		return reflect.Value{}, nil, fmt.Errorf("gollection.SortBy called with invalid func. required func(in1, in2 <T>) bool but supplied %v", funcType)
-	}
-	return funcValue, funcType, nil
 }
 
 func (g *gollection) sortBy(f interface{}) *gollection {
@@ -47,15 +31,7 @@ func (g *gollection) sortBy(f interface{}) *gollection {
 		return &gollection{err: err}
 	}
 
-	less := func(i, j int) bool {
-		return funcValue.Call([]reflect.Value{ret.Index(i), ret.Index(j)})[0].Interface().(bool)
-	}
-
-	sort.Sort(&funcs{
-		length: sv.Len(),
-		less:   less,
-		swap:   reflectutil.Swapper(ret.Interface()),
-	})
+	processSort(funcValue, ret)
 
 	return &gollection{
 		slice: ret.Interface(),
@@ -109,24 +85,14 @@ func (g *gollection) sortByStream(f interface{}) *gollection {
 	}(&wg, &currentType)
 	wg.Wait()
 
-	less := func(i, j int) bool {
-		return funcValue.Call([]reflect.Value{ret.Index(i), ret.Index(j)})[0].Interface().(bool)
-	}
-
-	sv := reflect.ValueOf(ret.Interface())
-
-	sort.Sort(&funcs{
-		length: sv.Len(),
-		less:   less,
-		swap:   reflectutil.Swapper(ret.Interface()),
-	})
+	processSort(funcValue, ret)
 
 	go func() {
 		// initialze next stream type
 		next.ch <- currentType
 
-		for i := 0; i < sv.Len(); i++ {
-			next.ch <- sv.Index(i).Interface()
+		for i := 0; i < ret.Len(); i++ {
+			next.ch <- ret.Index(i).Interface()
 		}
 		close(next.ch)
 	}()

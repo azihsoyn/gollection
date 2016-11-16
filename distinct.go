@@ -1,9 +1,6 @@
 package gollection
 
-import (
-	"fmt"
-	"reflect"
-)
+import "reflect"
 
 func (g *gollection) Distinct() *gollection {
 	if g.err != nil {
@@ -41,10 +38,8 @@ func (g *gollection) distinct() *gollection {
 
 	for i := 0; i < sv.Len(); i++ {
 		v := sv.Index(i)
-		id := v.Interface()
-		if _, ok := m[id]; !ok {
+		if processDistinct(v.Interface(), m) {
 			ret = reflect.Append(ret, v)
-			m[id] = true
 		}
 	}
 
@@ -58,9 +53,9 @@ func (g *gollection) distinctStream() *gollection {
 		ch: make(chan interface{}),
 	}
 
-	var initialized bool
-	m := make(map[interface{}]bool)
 	go func() {
+		var initialized bool
+		m := make(map[interface{}]bool)
 		for {
 			select {
 			case v, ok := <-g.ch:
@@ -72,9 +67,8 @@ func (g *gollection) distinctStream() *gollection {
 						continue
 					}
 
-					if _, ok := m[v]; !ok {
+					if processDistinct(v, m) {
 						next.ch <- v
-						m[v] = true
 					}
 				} else {
 					close(next.ch)
@@ -86,15 +80,6 @@ func (g *gollection) distinctStream() *gollection {
 		}
 	}()
 	return next
-}
-
-func (g *gollection) validateDistinctByFunc(f interface{}) (reflect.Value, reflect.Type, error) {
-	funcValue := reflect.ValueOf(f)
-	funcType := funcValue.Type()
-	if funcType.Kind() != reflect.Func || funcType.NumIn() != 1 || funcType.NumOut() != 1 {
-		return reflect.Value{}, nil, fmt.Errorf("gollection.DistinctBy called with invalid func. required func(in <T>) out <T> but supplied %v", funcType)
-	}
-	return funcValue, funcType, nil
 }
 
 func (g *gollection) distinctBy(f interface{}) *gollection {
@@ -114,10 +99,8 @@ func (g *gollection) distinctBy(f interface{}) *gollection {
 
 	for i := 0; i < sv.Len(); i++ {
 		v := sv.Index(i)
-		id := funcValue.Call([]reflect.Value{v})[0].Interface()
-		if _, ok := m[id]; !ok {
+		if processDistinctBy(funcValue, v, m) {
 			ret = reflect.Append(ret, v)
-			m[id] = true
 		}
 	}
 
@@ -131,14 +114,14 @@ func (g *gollection) distinctByStream(f interface{}) *gollection {
 		ch: make(chan interface{}),
 	}
 
-	funcValue, _, err := g.validateDistinctByFunc(f)
+	fv, _, err := g.validateDistinctByFunc(f)
 	if err != nil {
 		return &gollection{err: err}
 	}
 
-	var initialized bool
-	m := make(map[interface{}]bool)
-	go func() {
+	go func(fv *reflect.Value) {
+		var initialized bool
+		m := make(map[interface{}]bool)
 		for {
 			select {
 			case v, ok := <-g.ch:
@@ -150,10 +133,8 @@ func (g *gollection) distinctByStream(f interface{}) *gollection {
 						continue
 					}
 
-					id := funcValue.Call([]reflect.Value{reflect.ValueOf(v)})[0].Interface()
-					if _, ok := m[id]; !ok {
+					if processDistinctBy(*fv, reflect.ValueOf(v), m) {
 						next.ch <- v
-						m[id] = true
 					}
 				} else {
 					close(next.ch)
@@ -163,6 +144,7 @@ func (g *gollection) distinctByStream(f interface{}) *gollection {
 				continue
 			}
 		}
-	}()
+	}(&fv)
+
 	return next
 }

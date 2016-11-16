@@ -5,7 +5,7 @@ import (
 	"reflect"
 )
 
-func (g *gollection) FlatMap(f interface{}) *gollection {
+func (g *gollection) FlatMap(f /*func(v <T1>) <T2> */ interface{}) *gollection {
 	if g.err != nil {
 		return &gollection{err: g.err}
 	}
@@ -15,15 +15,6 @@ func (g *gollection) FlatMap(f interface{}) *gollection {
 	}
 
 	return g.flatMap(f)
-}
-
-func (g *gollection) validateFlatMapFunc(f /*func(v <T1>) <T2> */ interface{}) (reflect.Value, reflect.Type, error) {
-	funcValue := reflect.ValueOf(f)
-	funcType := funcValue.Type()
-	if funcType.Kind() != reflect.Func || funcType.NumIn() != 1 || funcType.NumOut() != 1 {
-		return reflect.Value{}, nil, fmt.Errorf("gollection.FlatMap called with invalid func. required func(in <T>) out <T> but supplied %v", funcType)
-	}
-	return funcValue, funcType, nil
 }
 
 func (g *gollection) flatMap(f interface{}) *gollection {
@@ -56,7 +47,7 @@ func (g *gollection) flatMap(f interface{}) *gollection {
 		v := sv.Index(i).Interface()
 		svv := reflect.ValueOf(v)
 		for j := 0; j < svv.Len(); j++ {
-			v := funcValue.Call([]reflect.Value{svv.Index(j)})[0]
+			v := processMapFunc(funcValue, svv.Index(j))
 			ret = reflect.Append(ret, v)
 		}
 	}
@@ -96,7 +87,7 @@ func (g *gollection) flatMapStream(f interface{}) *gollection {
 
 					svv := reflect.ValueOf(v)
 					for j := 0; j < svv.Len(); j++ {
-						v := funcValue.Call([]reflect.Value{svv.Index(j)})[0]
+						v := processMapFunc(funcValue, svv.Index(j))
 						next.ch <- v.Interface()
 					}
 				} else {
