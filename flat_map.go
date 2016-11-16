@@ -17,30 +17,28 @@ func (g *gollection) FlatMap(f interface{}) *gollection {
 	return g.flatMap(f)
 }
 
-func (g *gollection) flatMap(f interface{}) *gollection {
-	sv := reflect.ValueOf(g.slice)
-	if sv.Kind() != reflect.Slice {
-		return &gollection{
-			slice: nil,
-			err:   fmt.Errorf("gollection.FlatMap called with non-slice value of type %T", g.slice),
-		}
-	}
-
-	currentType := reflect.TypeOf(g.slice).Elem()
-	if currentType.Kind() != reflect.Slice {
-		return &gollection{
-			slice: nil,
-			err:   fmt.Errorf("gollection.FlatMap called with non-slice-of-slice value of type %T", g.slice),
-		}
-	}
-
+func (g *gollection) validateFlatMapFunc(f interface{}) (reflect.Value, reflect.Type, error) {
 	funcValue := reflect.ValueOf(f)
 	funcType := funcValue.Type()
 	if funcType.Kind() != reflect.Func || funcType.NumIn() != 1 || funcType.NumOut() != 1 {
-		return &gollection{
-			slice: nil,
-			err:   fmt.Errorf("gollection.FlatMap called with invalid func. required func(in <T>) out <T> but supplied %v", g.slice),
-		}
+		return reflect.Value{}, nil, fmt.Errorf("gollection.FlatMap called with invalid func. required func(in <T>) out <T> but supplied %v", funcType)
+	}
+	return funcValue, funcType, nil
+}
+
+func (g *gollection) flatMap(f interface{}) *gollection {
+	sv, err := g.validateSlice("FlatMap")
+	if err != nil {
+		return &gollection{err: err}
+	}
+
+	if err := g.validateSliceOfSlice("FlatMap"); err != nil {
+		return &gollection{err: err}
+	}
+
+	funcValue, funcType, err := g.validateFlatMapFunc(f)
+	if err != nil {
+		return &gollection{err: err}
 	}
 
 	resultSliceType := reflect.SliceOf(funcType.Out(0))
@@ -74,13 +72,9 @@ func (g *gollection) flatMapStream(f interface{}) *gollection {
 		ch: make(chan interface{}),
 	}
 
-	funcValue := reflect.ValueOf(f)
-	funcType := funcValue.Type()
-	if funcType.Kind() != reflect.Func || funcType.NumIn() != 1 || funcType.NumOut() != 1 {
-		return &gollection{
-			slice: nil,
-			err:   fmt.Errorf("gollection.FlatMap called with invalid func. required func(in <T>) out <T> but supplied %v", g.slice),
-		}
+	funcValue, funcType, err := g.validateFlatMapFunc(f)
+	if err != nil {
+		return &gollection{err: err}
 	}
 
 	var initialized bool
