@@ -18,13 +18,21 @@ func (g *gollection) Reduce(f interface{}) *gollection {
 	return g.reduce(f)
 }
 
+func (g *gollection) validateReduceFunc(f interface{}) (reflect.Value, reflect.Type, error) {
+	funcValue := reflect.ValueOf(f)
+	funcType := funcValue.Type()
+	if funcType.Kind() != reflect.Func ||
+		funcType.NumIn() != 2 ||
+		funcType.NumOut() != 1 {
+		return reflect.Value{}, nil, fmt.Errorf("gollection.Reduce called with invalid func. required func(in1, in2 <T>) out <T> but supplied %v", funcType)
+	}
+	return funcValue, funcType, nil
+}
+
 func (g *gollection) reduce(f interface{}) *gollection {
-	sv := reflect.ValueOf(g.slice)
-	if sv.Kind() != reflect.Slice {
-		return &gollection{
-			slice: nil,
-			err:   fmt.Errorf("gollection.Reduce called with non-slice value of type %T", g.slice),
-		}
+	sv, err := g.validateSlice("Reduce")
+	if err != nil {
+		return &gollection{err: err}
 	}
 
 	if sv.Len() == 0 {
@@ -38,13 +46,9 @@ func (g *gollection) reduce(f interface{}) *gollection {
 		}
 	}
 
-	funcValue := reflect.ValueOf(f)
-	funcType := funcValue.Type()
-	if funcType.Kind() != reflect.Func || funcType.NumIn() != 2 || funcType.NumOut() != 1 {
-		return &gollection{
-			slice: nil,
-			err:   fmt.Errorf("gollection.Reduce called with invalid func. required func(in1, in2 <T>) out <T> but supplied %v", g.slice),
-		}
+	funcValue, _, err := g.validateReduceFunc(f)
+	if err != nil {
+		return &gollection{err: err}
 	}
 
 	ret := sv.Index(0).Interface()
@@ -60,17 +64,12 @@ func (g *gollection) reduce(f interface{}) *gollection {
 }
 
 func (g *gollection) reduceStream(f interface{}) *gollection {
-	funcValue := reflect.ValueOf(f)
-	funcType := funcValue.Type()
-	if funcType.Kind() != reflect.Func || funcType.NumIn() != 2 || funcType.NumOut() != 1 {
-		return &gollection{
-			slice: nil,
-			err:   fmt.Errorf("gollection.Reduce called with invalid func. required func(in1, in2 <T>) out <T> but supplied %v", g.slice),
-		}
+	funcValue, _, err := g.validateReduceFunc(f)
+	if err != nil {
+		return &gollection{err: err}
 	}
 
 	var ret interface{}
-	var err error
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	go func(wg *sync.WaitGroup, ret *interface{}, err *error) {
