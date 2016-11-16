@@ -17,23 +17,28 @@ func (g *gollection) Map(f interface{}) *gollection {
 	return g.map_(f)
 }
 
-func (g *gollection) map_(f interface{}) *gollection {
-	sv := reflect.ValueOf(g.slice)
-	if sv.Kind() != reflect.Slice {
-		return &gollection{
-			slice: nil,
-			err:   fmt.Errorf("gollection.Map called with non-slice value of type %T", g.slice),
-		}
-	}
-
+func (g *gollection) validateMapFunc(f interface{}) (reflect.Value, reflect.Type, error) {
 	funcValue := reflect.ValueOf(f)
 	funcType := funcValue.Type()
-	if funcType.Kind() != reflect.Func || funcType.NumIn() != 1 || funcType.NumOut() != 1 {
-		return &gollection{
-			slice: nil,
-			err:   fmt.Errorf("gollection.Map called with invalid func. required func(in <T>) out <T> but supplied %v", g.slice),
-		}
+	if funcType.Kind() != reflect.Func ||
+		funcType.NumIn() != 1 ||
+		funcType.NumOut() != 1 {
+		return reflect.Value{}, nil, fmt.Errorf("gollection.Map called with invalid func. required func(in <T>) out <T> but supplied %v", funcType)
 	}
+	return funcValue, funcType, nil
+}
+
+func (g *gollection) map_(f interface{}) *gollection {
+	sv, err := g.validateSlice("Map")
+	if err != nil {
+		return &gollection{err: err}
+	}
+
+	funcValue, funcType, err := g.validateMapFunc(f)
+	if err != nil {
+		return &gollection{err: err}
+	}
+
 	resultSliceType := reflect.SliceOf(funcType.Out(0))
 	ret := reflect.MakeSlice(resultSliceType, 0, sv.Len())
 
@@ -61,12 +66,9 @@ func (g *gollection) mapStream(f interface{}) *gollection {
 		ch: make(chan interface{}),
 	}
 
-	funcValue := reflect.ValueOf(f)
-	funcType := funcValue.Type()
-	if funcType.Kind() != reflect.Func || funcType.NumIn() != 1 || funcType.NumOut() != 1 {
-		return &gollection{
-			err: fmt.Errorf("gollection.Map called with invalid func. required func(in <T>) out <T> but supplied %v", f),
-		}
+	funcValue, funcType, err := g.validateMapFunc(f)
+	if err != nil {
+		return &gollection{err: err}
 	}
 
 	var initialized bool
