@@ -9,7 +9,7 @@ import (
 	"go4.org/reflectutil"
 )
 
-func (g *gollection) SortBy(f interface{}) *gollection {
+func (g *gollection) SortBy(f /* func(v1, v2 <T>) bool */ interface{}) *gollection {
 	if g.err != nil {
 		return &gollection{err: g.err}
 	}

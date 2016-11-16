@@ -6,7 +6,7 @@ import (
 	"sync"
 )
 
-func (g *gollection) Reduce(f interface{}) *gollection {
+func (g *gollection) Reduce(f /* func(v1, v2 <T>) <T> */ interface{}) *gollection {
 	if g.err != nil {
 		return &gollection{err: g.err}
 	}

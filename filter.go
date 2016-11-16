@@ -16,7 +16,7 @@ func (g *gollection) Filter(f interface{}) *gollection {
 	return g.filter(f)
 }
 
-func (g *gollection) validateFilterFunc(f interface{}) (reflect.Value, reflect.Type, error) {
+func (g *gollection) validateFilterFunc(f /* func(v <T>) bool */ interface{}) (reflect.Value, reflect.Type, error) {
 	funcValue := reflect.ValueOf(f)
 	funcType := funcValue.Type()
 	if funcType.Kind() != reflect.Func ||

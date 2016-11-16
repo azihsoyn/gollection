@@ -17,7 +17,7 @@ func (g *gollection) Map(f interface{}) *gollection {
 	return g.map_(f)
 }
 
-func (g *gollection) validateMapFunc(f interface{}) (reflect.Value, reflect.Type, error) {
+func (g *gollection) validateMapFunc(f /* func(v <T1>) <T2> */ interface{}) (reflect.Value, reflect.Type, error) {
 	funcValue := reflect.ValueOf(f)
 	funcType := funcValue.Type()
 	if funcType.Kind() != reflect.Func ||

@@ -18,7 +18,7 @@ func (g *gollection) Distinct() *gollection {
 
 }
 
-func (g *gollection) DistinctBy(f interface{}) *gollection {
+func (g *gollection) DistinctBy(f /*func(v <T1>) <T2>*/ interface{}) *gollection {
 	if g.err != nil {
 		return &gollection{err: g.err}
 	}

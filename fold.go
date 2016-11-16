@@ -6,7 +6,7 @@ import (
 	"sync"
 )
 
-func (g *gollection) Fold(v0 interface{}, f interface{}) *gollection {
+func (g *gollection) Fold(v0 interface{}, f /* func(v1, v2 <T>) <T> */ interface{}) *gollection {
 	if g.err != nil {
 		return &gollection{err: g.err}
 	}

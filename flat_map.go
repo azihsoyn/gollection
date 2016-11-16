@@ -17,7 +17,7 @@ func (g *gollection) FlatMap(f interface{}) *gollection {
 	return g.flatMap(f)
 }
 
-func (g *gollection) validateFlatMapFunc(f interface{}) (reflect.Value, reflect.Type, error) {
+func (g *gollection) validateFlatMapFunc(f /*func(v <T1>) <T2> */ interface{}) (reflect.Value, reflect.Type, error) {
 	funcValue := reflect.ValueOf(f)
 	funcType := funcValue.Type()
 	if funcType.Kind() != reflect.Func || funcType.NumIn() != 1 || funcType.NumOut() != 1 {
