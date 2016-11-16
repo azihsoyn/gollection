@@ -21,24 +21,30 @@ func (g *gollection) SortBy(f interface{}) *gollection {
 	return g.sortBy(f)
 }
 
-func (g *gollection) sortBy(f interface{}) *gollection {
-	sv := reflect.ValueOf(g.slice)
-	if sv.Kind() != reflect.Slice {
-		return &gollection{
-			slice: nil,
-			err:   fmt.Errorf("gollection.SortBy called with non-slice value of type %T", g.slice),
-		}
+func (g *gollection) validateSortByFunc(f interface{}) (reflect.Value, reflect.Type, error) {
+	funcValue := reflect.ValueOf(f)
+	funcType := funcValue.Type()
+	if funcType.Kind() != reflect.Func ||
+		funcType.NumIn() != 2 ||
+		funcType.NumOut() != 1 ||
+		funcType.Out(0).Kind() != reflect.Bool {
+		return reflect.Value{}, nil, fmt.Errorf("gollection.SortBy called with invalid func. required func(in1, in2 <T>) bool but supplied %v", funcType)
 	}
+	return funcValue, funcType, nil
+}
+
+func (g *gollection) sortBy(f interface{}) *gollection {
+	sv, err := g.validateSlice("SortBy")
+	if err != nil {
+		return &gollection{err: err}
+	}
+
 	ret := reflect.MakeSlice(sv.Type(), sv.Len(), sv.Cap())
 	reflect.Copy(ret, sv)
 
-	funcValue := reflect.ValueOf(f)
-	funcType := funcValue.Type()
-	if funcType.Kind() != reflect.Func || funcType.NumIn() != 2 || funcType.NumOut() != 1 || funcType.Out(0).Kind() != reflect.Bool {
-		return &gollection{
-			slice: nil,
-			err:   fmt.Errorf("gollection.SortBy called with invalid func. required func(in1, in2 <T>) bool but supplied %v", g.slice),
-		}
+	funcValue, _, err := g.validateSortByFunc(f)
+	if err != nil {
+		return &gollection{err: err}
 	}
 
 	less := func(i, j int) bool {
@@ -62,13 +68,9 @@ func (g *gollection) sortByStream(f interface{}) *gollection {
 		ch: make(chan interface{}),
 	}
 
-	funcValue := reflect.ValueOf(f)
-	funcType := funcValue.Type()
-	if funcType.Kind() != reflect.Func || funcType.NumIn() != 2 || funcType.NumOut() != 1 || funcType.Out(0).Kind() != reflect.Bool {
-		return &gollection{
-			slice: nil,
-			err:   fmt.Errorf("gollection.SortBy called with invalid func. required func(in1, in2 <T>) bool but supplied %v", g.slice),
-		}
+	funcValue, _, err := g.validateSortByFunc(f)
+	if err != nil {
+		return &gollection{err: err}
 	}
 
 	var ret reflect.Value
