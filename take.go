@@ -1,9 +1,6 @@
 package gollection
 
-import (
-	"fmt"
-	"reflect"
-)
+import "reflect"
 
 func (g *gollection) Take(n int) *gollection {
 	if g.err != nil {
@@ -18,12 +15,9 @@ func (g *gollection) Take(n int) *gollection {
 }
 
 func (g *gollection) take(n int) *gollection {
-	sv := reflect.ValueOf(g.slice)
-	if sv.Kind() != reflect.Slice {
-		return &gollection{
-			slice: nil,
-			err:   fmt.Errorf("gollection.Take called with non-slice value of type %T", g.slice),
-		}
+	sv, err := g.validateSlice("Take")
+	if err != nil {
+		return &gollection{err: err}
 	}
 
 	limit := sv.Len()

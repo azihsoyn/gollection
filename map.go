@@ -1,11 +1,8 @@
 package gollection
 
-import (
-	"fmt"
-	"reflect"
-)
+import "reflect"
 
-func (g *gollection) Map(f interface{}) *gollection {
+func (g *gollection) Map(f /* func(v <T1>) <T2> */ interface{}) *gollection {
 	if g.err != nil {
 		return &gollection{err: g.err}
 	}
@@ -18,22 +15,16 @@ func (g *gollection) Map(f interface{}) *gollection {
 }
 
 func (g *gollection) map_(f interface{}) *gollection {
-	sv := reflect.ValueOf(g.slice)
-	if sv.Kind() != reflect.Slice {
-		return &gollection{
-			slice: nil,
-			err:   fmt.Errorf("gollection.Map called with non-slice value of type %T", g.slice),
-		}
+	sv, err := g.validateSlice("Map")
+	if err != nil {
+		return &gollection{err: err}
 	}
 
-	funcValue := reflect.ValueOf(f)
-	funcType := funcValue.Type()
-	if funcType.Kind() != reflect.Func || funcType.NumIn() != 1 || funcType.NumOut() != 1 {
-		return &gollection{
-			slice: nil,
-			err:   fmt.Errorf("gollection.Map called with invalid func. required func(in <T>) out <T> but supplied %v", g.slice),
-		}
+	funcValue, funcType, err := g.validateMapFunc(f)
+	if err != nil {
+		return &gollection{err: err}
 	}
+
 	resultSliceType := reflect.SliceOf(funcType.Out(0))
 	ret := reflect.MakeSlice(resultSliceType, 0, sv.Len())
 
@@ -46,7 +37,7 @@ func (g *gollection) map_(f interface{}) *gollection {
 	}
 
 	for i := 0; i < sv.Len(); i++ {
-		v := funcValue.Call([]reflect.Value{sv.Index(i)})[0]
+		v := processMapFunc(funcValue, sv.Index(i))
 		ret = reflect.Append(ret, v)
 	}
 
@@ -61,12 +52,9 @@ func (g *gollection) mapStream(f interface{}) *gollection {
 		ch: make(chan interface{}),
 	}
 
-	funcValue := reflect.ValueOf(f)
-	funcType := funcValue.Type()
-	if funcType.Kind() != reflect.Func || funcType.NumIn() != 1 || funcType.NumOut() != 1 {
-		return &gollection{
-			err: fmt.Errorf("gollection.Map called with invalid func. required func(in <T>) out <T> but supplied %v", f),
-		}
+	funcValue, funcType, err := g.validateMapFunc(f)
+	if err != nil {
+		return &gollection{err: err}
 	}
 
 	var initialized bool
@@ -82,7 +70,7 @@ func (g *gollection) mapStream(f interface{}) *gollection {
 						continue
 					}
 
-					v := funcValue.Call([]reflect.Value{reflect.ValueOf(v)})[0].Interface()
+					v := processMapFunc(funcValue, reflect.ValueOf(v)).Interface()
 					next.ch <- v
 				} else {
 					close(next.ch)
