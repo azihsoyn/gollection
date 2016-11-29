@@ -1,21 +1,23 @@
 package gollection
 
-import (
-	"fmt"
-	"reflect"
-)
+import "reflect"
 
 func (g *gollection) Take(n int) *gollection {
 	if g.err != nil {
 		return &gollection{err: g.err}
 	}
 
-	sv := reflect.ValueOf(g.slice)
-	if sv.Kind() != reflect.Slice {
-		return &gollection{
-			slice: nil,
-			err:   fmt.Errorf("gollection.Take called with non-slice value of type %T", g.slice),
-		}
+	if g.ch != nil {
+		return g.takeStream(n)
+	}
+
+	return g.take(n)
+}
+
+func (g *gollection) take(n int) *gollection {
+	sv, err := g.validateSlice("Take")
+	if err != nil {
+		return &gollection{err: err}
 	}
 
 	limit := sv.Len()
@@ -32,4 +34,37 @@ func (g *gollection) Take(n int) *gollection {
 	return &gollection{
 		slice: ret.Interface(),
 	}
+}
+
+func (g *gollection) takeStream(n int) *gollection {
+	next := &gollection{
+		ch: make(chan interface{}),
+	}
+
+	var initialized bool
+	go func() {
+		i := 0
+		for {
+			select {
+			case v, ok := <-g.ch:
+				// initialize next stream type
+				if ok && !initialized {
+					next.ch <- v
+					initialized = true
+					continue
+				}
+
+				if ok && i < n {
+					next.ch <- v
+					i++
+				} else {
+					close(next.ch)
+					return
+				}
+			default:
+				continue
+			}
+		}
+	}()
+	return next
 }

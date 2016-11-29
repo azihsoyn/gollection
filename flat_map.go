@@ -5,34 +5,31 @@ import (
 	"reflect"
 )
 
-func (g *gollection) FlatMap(f interface{}) *gollection {
+func (g *gollection) FlatMap(f /*func(v <T1>) <T2> */ interface{}) *gollection {
 	if g.err != nil {
 		return &gollection{err: g.err}
 	}
 
-	sv := reflect.ValueOf(g.slice)
-	if sv.Kind() != reflect.Slice {
-		return &gollection{
-			slice: nil,
-			err:   fmt.Errorf("gollection.FlatMap called with non-slice value of type %T", g.slice),
-		}
+	if g.ch != nil {
+		return g.flatMapStream(f)
 	}
 
-	currentType := reflect.TypeOf(g.slice).Elem()
-	if currentType.Kind() != reflect.Slice {
-		return &gollection{
-			slice: nil,
-			err:   fmt.Errorf("gollection.FlatMap called with non-slice-of-slice value of type %T", g.slice),
-		}
+	return g.flatMap(f)
+}
+
+func (g *gollection) flatMap(f interface{}) *gollection {
+	sv, err := g.validateSlice("FlatMap")
+	if err != nil {
+		return &gollection{err: err}
 	}
 
-	funcValue := reflect.ValueOf(f)
-	funcType := funcValue.Type()
-	if funcType.Kind() != reflect.Func || funcType.NumIn() != 1 || funcType.NumOut() != 1 {
-		return &gollection{
-			slice: nil,
-			err:   fmt.Errorf("gollection.FlatMap called with invalid func. required func(in <T>) out <T> but supplied %v", g.slice),
-		}
+	if _, err := g.validateSliceOfSlice("FlatMap"); err != nil {
+		return &gollection{err: err}
+	}
+
+	funcValue, funcType, err := g.validateFlatMapFunc(f)
+	if err != nil {
+		return &gollection{err: err}
 	}
 
 	resultSliceType := reflect.SliceOf(funcType.Out(0))
@@ -50,7 +47,7 @@ func (g *gollection) FlatMap(f interface{}) *gollection {
 		v := sv.Index(i).Interface()
 		svv := reflect.ValueOf(v)
 		for j := 0; j < svv.Len(); j++ {
-			v := funcValue.Call([]reflect.Value{svv.Index(j)})[0]
+			v := processMapFunc(funcValue, svv.Index(j))
 			ret = reflect.Append(ret, v)
 		}
 	}
@@ -59,4 +56,49 @@ func (g *gollection) FlatMap(f interface{}) *gollection {
 		slice: ret.Interface(),
 		err:   nil,
 	}
+}
+
+func (g *gollection) flatMapStream(f interface{}) *gollection {
+	next := &gollection{
+		ch: make(chan interface{}),
+	}
+
+	funcValue, funcType, err := g.validateFlatMapFunc(f)
+	if err != nil {
+		return &gollection{err: err}
+	}
+
+	var initialized bool
+	go func() {
+		for {
+			select {
+			case v, ok := <-g.ch:
+				if ok {
+					if !initialized {
+						// initialze next stream type
+						currentType := v.(reflect.Type).Elem()
+						if currentType.Kind() != reflect.Slice {
+							next.ch <- fmt.Errorf("gollection.FlatMap called with non-slice-of-slice value of type %s", currentType)
+						}
+						next.ch <- reflect.SliceOf(funcType.Out(0))
+						initialized = true
+						continue
+					}
+
+					svv := reflect.ValueOf(v)
+					for j := 0; j < svv.Len(); j++ {
+						v := processMapFunc(funcValue, svv.Index(j))
+						next.ch <- v.Interface()
+					}
+				} else {
+					close(next.ch)
+					return
+				}
+			default:
+				continue
+			}
+		}
+	}()
+
+	return next
 }

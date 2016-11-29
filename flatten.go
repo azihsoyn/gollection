@@ -10,20 +10,21 @@ func (g *gollection) Flatten() *gollection {
 		return &gollection{err: g.err}
 	}
 
-	sv := reflect.ValueOf(g.slice)
-	if sv.Kind() != reflect.Slice {
-		return &gollection{
-			slice: nil,
-			err:   fmt.Errorf("gollection.Flatten called with non-slice value of type %T", g.slice),
-		}
+	if g.ch != nil {
+		return g.flattenStream()
+	}
+	return g.flatten()
+}
+
+func (g *gollection) flatten() *gollection {
+	sv, err := g.validateSlice("Flatten")
+	if err != nil {
+		return &gollection{err: err}
 	}
 
-	currentType := reflect.TypeOf(g.slice).Elem()
-	if currentType.Kind() != reflect.Slice {
-		return &gollection{
-			slice: nil,
-			err:   fmt.Errorf("gollection.Flatten called with non-slice-of-slice value of type %T", g.slice),
-		}
+	currentType, err := g.validateSliceOfSlice("Flatten")
+	if err != nil {
+		return &gollection{err: err}
 	}
 
 	// init
@@ -41,4 +42,42 @@ func (g *gollection) Flatten() *gollection {
 		slice: ret.Interface(),
 		err:   nil,
 	}
+}
+
+func (g *gollection) flattenStream() *gollection {
+	next := &gollection{
+		ch: make(chan interface{}),
+	}
+
+	var initialized bool
+	go func() {
+		for {
+			select {
+			case v, ok := <-g.ch:
+				if ok {
+					// initialze next stream type
+					if !initialized {
+						currentType := v.(reflect.Type).Elem()
+						if currentType.Kind() != reflect.Slice {
+							next.ch <- fmt.Errorf("gollection.Flatten called with non-slice-of-slice value of type %s", currentType)
+						}
+						next.ch <- currentType
+						initialized = true
+						continue
+					}
+
+					svv := reflect.ValueOf(v)
+					for j := 0; j < svv.Len(); j++ {
+						next.ch <- svv.Index(j).Interface()
+					}
+				} else {
+					close(next.ch)
+					return
+				}
+			default:
+				continue
+			}
+		}
+	}()
+	return next
 }

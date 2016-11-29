@@ -8,20 +8,38 @@ import (
 )
 
 func BenchmarkNew(b *testing.B) {
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = gollection.New([]int{})
+		gollection.New([]int{}).Result()
+	}
+}
+
+func BenchmarkNewStream(b *testing.B) {
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		gollection.NewStream([]int{}).Result()
 	}
 }
 
 func BenchmarkDistinct(b *testing.B) {
-	g := gollection.New([]int{0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9})
+	arr := []int{0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9}
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		g.Distinct()
+		gollection.New(arr).Distinct().Result()
+	}
+}
+
+func BenchmarkDistinct_Stream(b *testing.B) {
+	arr := []int{0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		gollection.NewStream(arr).Distinct().Result()
 	}
 }
 
 func BenchmarkDistinct_WithoutGollection(b *testing.B) {
 	arr := []int{0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9}
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		m := make(map[int]bool)
 		ret := make([]int, 0, len(arr))
@@ -34,15 +52,28 @@ func BenchmarkDistinct_WithoutGollection(b *testing.B) {
 	}
 }
 func BenchmarkDistinctBy(b *testing.B) {
-	g := gollection.New([]int{0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9})
+	arr := []int{0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9}
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		g.DistinctBy(func(v int) int {
+		gollection.New(arr).DistinctBy(func(v int) int {
 			return v
-		})
+		}).Result()
 	}
 }
+
+func BenchmarkDistinctBy_Stream(b *testing.B) {
+	arr := []int{0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		gollection.NewStream(arr).DistinctBy(func(v int) int {
+			return v
+		}).Result()
+	}
+}
+
 func BenchmarkDistinctBy_WithoutGollection(b *testing.B) {
 	arr := []int{0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9}
+	b.ResetTimer()
 	f := func(i int) int {
 		return i
 	}
@@ -60,16 +91,28 @@ func BenchmarkDistinctBy_WithoutGollection(b *testing.B) {
 }
 
 func BenchmarkFilter(b *testing.B) {
-	g := gollection.New([]int{0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9})
+	arr := []int{0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9}
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		g.Filter(func(v int) bool {
+		gollection.New(arr).Filter(func(v int) bool {
 			return v > 5
-		})
+		}).Result()
+	}
+}
+
+func BenchmarkFilter_Stream(b *testing.B) {
+	arr := []int{0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		gollection.NewStream(arr).Filter(func(v int) bool {
+			return v > 5
+		}).Result()
 	}
 }
 
 func BenchmarkFilter_WithoutGollection(b *testing.B) {
 	arr := []int{0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9}
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		ret := make([]int, 0, len(arr))
 		for _, i := range arr {
@@ -81,16 +124,28 @@ func BenchmarkFilter_WithoutGollection(b *testing.B) {
 }
 
 func BenchmarkFlatMap(b *testing.B) {
-	g := gollection.New([][]int{{0, 0, 1, 1, 2, 2}, {3, 3, 4, 4, 5, 5}, {6, 6, 7, 7, 8, 8, 9, 9}})
+	arr := [][]int{{0, 0, 1, 1, 2, 2}, {3, 3, 4, 4, 5, 5}, {6, 6, 7, 7, 8, 8, 9, 9}}
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		g.FlatMap(func(v int) int {
+		gollection.New(arr).FlatMap(func(v int) int {
 			return v * 2
-		})
+		}).Result()
+	}
+}
+
+func BenchmarkFlatMap_Stream(b *testing.B) {
+	arr := [][]int{{0, 0, 1, 1, 2, 2}, {3, 3, 4, 4, 5, 5}, {6, 6, 7, 7, 8, 8, 9, 9}}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		gollection.NewStream(arr).FlatMap(func(v int) int {
+			return v * 2
+		}).Result()
 	}
 }
 
 func BenchmarkFlatMap_WithoutGollection(b *testing.B) {
 	arr := [][]int{{0, 0, 1, 1, 2, 2}, {3, 3, 4, 4, 5, 5}, {6, 6, 7, 7, 8, 8, 9, 9}}
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		ret := make([]int, 0, len(arr))
 		for _, arr2 := range arr {
@@ -102,14 +157,24 @@ func BenchmarkFlatMap_WithoutGollection(b *testing.B) {
 }
 
 func BenchmarkFlatten(b *testing.B) {
-	g := gollection.New([][]int{{0, 0, 1, 1, 2, 2}, {3, 3, 4, 4, 5, 5}, {6, 6, 7, 7, 8, 8, 9, 9}})
+	arr := [][]int{{0, 0, 1, 1, 2, 2}, {3, 3, 4, 4, 5, 5}, {6, 6, 7, 7, 8, 8, 9, 9}}
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		g.Flatten()
+		gollection.New(arr).Flatten().Result()
+	}
+}
+
+func BenchmarkFlatten_Stream(b *testing.B) {
+	arr := [][]int{{0, 0, 1, 1, 2, 2}, {3, 3, 4, 4, 5, 5}, {6, 6, 7, 7, 8, 8, 9, 9}}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		gollection.NewStream(arr).Flatten().Result()
 	}
 }
 
 func BenchmarkFlatten_WithoutGollection(b *testing.B) {
 	arr := [][]int{{0, 0, 1, 1, 2, 2}, {3, 3, 4, 4, 5, 5}, {6, 6, 7, 7, 8, 8, 9, 9}}
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		ret := make([]int, 0, len(arr))
 		for _, arr2 := range arr {
@@ -121,16 +186,28 @@ func BenchmarkFlatten_WithoutGollection(b *testing.B) {
 }
 
 func BenchmarkFold(b *testing.B) {
-	g := gollection.New([]int{0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9})
+	arr := []int{0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9}
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		g.Fold(0, func(v1, v2 int) int {
+		gollection.New(arr).Fold(0, func(v1, v2 int) int {
 			return v1 + v2
-		})
+		}).Result()
+	}
+}
+
+func BenchmarkFold_Stream(b *testing.B) {
+	arr := []int{0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		gollection.NewStream(arr).Fold(0, func(v1, v2 int) int {
+			return v1 + v2
+		}).Result()
 	}
 }
 
 func BenchmarkFold_WithoutGollection(b *testing.B) {
 	arr := []int{0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9}
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		var ret int
 		for _, v := range arr {
@@ -140,16 +217,28 @@ func BenchmarkFold_WithoutGollection(b *testing.B) {
 }
 
 func BenchmarkMap(b *testing.B) {
-	g := gollection.New([]int{0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9})
+	arr := []int{0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9}
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		g.Map(func(v int) int {
+		gollection.New(arr).Map(func(v int) int {
 			return v * 2
-		})
+		}).Result()
+	}
+}
+
+func BenchmarkMap_Stream(b *testing.B) {
+	arr := []int{0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		gollection.NewStream(arr).Map(func(v int) int {
+			return v * 2
+		}).Result()
 	}
 }
 
 func BenchmarkMap_WithoutGollection(b *testing.B) {
 	arr := []int{0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9}
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		ret := make([]int, 0, len(arr))
 		for _, v := range arr {
@@ -157,17 +246,30 @@ func BenchmarkMap_WithoutGollection(b *testing.B) {
 		}
 	}
 }
+
 func BenchmarkReduce(b *testing.B) {
-	g := gollection.New([]int{0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9})
+	arr := []int{0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9}
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		g.Reduce(func(v1, v2 int) int {
+		gollection.New(arr).Reduce(func(v1, v2 int) int {
 			return v1 + v2
-		})
+		}).Result()
+	}
+}
+
+func BenchmarkReduce_Stream(b *testing.B) {
+	arr := []int{0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		gollection.NewStream(arr).Reduce(func(v1, v2 int) int {
+			return v1 + v2
+		}).Result()
 	}
 }
 
 func BenchmarkReduce_WithoutGollection(b *testing.B) {
 	arr := []int{0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9}
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		var ret int
 		for _, v := range arr {
@@ -177,30 +279,52 @@ func BenchmarkReduce_WithoutGollection(b *testing.B) {
 }
 
 func BenchmarkSort(b *testing.B) {
-	g := gollection.New([]int{0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9})
+	arr := []int{0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9}
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		g.SortBy(func(v1, v2 int) bool {
+		gollection.New(arr).SortBy(func(v1, v2 int) bool {
 			return v1 < v2
-		})
+		}).Result()
+	}
+}
+
+func BenchmarkSort_Stream(b *testing.B) {
+	arr := []int{0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		gollection.NewStream(arr).SortBy(func(v1, v2 int) bool {
+			return v1 < v2
+		}).Result()
 	}
 }
 
 func BenchmarkSort_WithoutGollection(b *testing.B) {
 	arr := []int{0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9}
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		sort.Sort(sort.IntSlice(arr))
 	}
 }
 
 func BenchmarkTake(b *testing.B) {
-	g := gollection.New([]int{0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9})
+	arr := []int{0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9}
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		g.Take(3)
+		gollection.New(arr).Take(3).Result()
+	}
+}
+
+func BenchmarkTake_Stream(b *testing.B) {
+	arr := []int{0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		gollection.NewStream(arr).Take(3).Result()
 	}
 }
 
 func BenchmarkTake_WithoutGollection(b *testing.B) {
 	arr := []int{0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9}
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		limit := 3
 		if limit < len(arr) {
