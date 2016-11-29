@@ -80,6 +80,17 @@ func Example_reduce() {
 	// Output: 55 <nil>
 }
 
+func Example_skip() {
+	arr := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+
+	res, err := gollection.New(arr).Skip(3).Result()
+	fmt.Println(res, err)
+	res, err = gollection.New(arr).Skip(30).Result()
+	fmt.Println(res, err)
+	// Output: [4 5 6 7 8 9 10] <nil>
+	// [] <nil>
+}
+
 func Example_sort() {
 	arr := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1}
 
