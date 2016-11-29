@@ -29,6 +29,12 @@ func TestSkip_NotSlice(t *testing.T) {
 	assert.Error(err)
 }
 
+func TestSkip_InvalidArgument(t *testing.T) {
+	assert := assert.New(t)
+	_, err := gollection.New([]int{1, 2, 3}).Skip(-1).Result()
+	assert.Error(err)
+}
+
 func TestSkip_HavingError(t *testing.T) {
 	assert := assert.New(t)
 	_, err := gollection.New("not slice value").Skip(0).Skip(0).Result()
