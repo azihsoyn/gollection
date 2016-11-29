@@ -10,16 +10,44 @@ import (
 )
 
 type gollection struct {
-	slice interface{}
-	val   interface{}
-	ch    chan interface{}
-	err   error
+	slice2 []interface{}
+	slice  interface{}
+	val    interface{}
+	ch     chan interface{}
+	err    error
+	meta   meta
+}
+
+type meta struct {
+	Len  int
+	Type reflect.Type
 }
 
 // New returns a gollection instance which can method chain *sequentially* specified by some type of slice.
 func New(slice interface{}) *gollection {
 	return &gollection{
 		slice: slice,
+	}
+}
+
+func New2(slice interface{}) *gollection {
+	sv := reflect.ValueOf(slice)
+	if sv.Kind() != reflect.Slice {
+		return &gollection{err: fmt.Errorf("gollection.%s called with non-slice value of type %T", slice)}
+	}
+	ret := make([]interface{}, 0, sv.Len())
+
+	for i := 0; i < sv.Len(); i++ {
+		v := sv.Index(i).Interface()
+		ret = append(ret, v)
+	}
+	return &gollection{
+		slice:  slice,
+		slice2: ret,
+		meta: meta{
+			Len:  sv.Len(),
+			Type: sv.Type(),
+		},
 	}
 }
 
