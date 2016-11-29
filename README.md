@@ -14,6 +14,7 @@ gollection is golang collection util library (inspired by [kotlin collection](ht
 - fold
 - map
 - reduce
+- skip ([java8](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html#skip-long-))
 - sortBy
 - take
 
