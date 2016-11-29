@@ -27,6 +27,7 @@ func TestFold(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal(expect, res)
 }
+
 func TestFold_NotSlice(t *testing.T) {
 	assert := assert.New(t)
 	_, err := gollection.New("not slice value").Fold(100, func(v1, v2 interface{}) interface{} {
@@ -44,11 +45,11 @@ func TestFold_HavingError(t *testing.T) {
 	assert := assert.New(t)
 	_, err := gollection.New("not slice value").
 		Fold(100, func(v1, v2 interface{}) interface{} {
-		return ""
-	}).
+			return ""
+		}).
 		Fold(100, func(v1, v2 interface{}) interface{} {
-		return ""
-	}).
+			return ""
+		}).
 		Result()
 	assert.Error(err)
 }
@@ -90,11 +91,11 @@ func TestFold_Stream_HavingError(t *testing.T) {
 	assert := assert.New(t)
 	_, err := gollection.NewStream("not slice value").
 		Fold(100, func(v1, v2 interface{}) interface{} {
-		return ""
-	}).
+			return ""
+		}).
 		Fold(100, func(v1, v2 interface{}) interface{} {
-		return ""
-	}).
+			return ""
+		}).
 		Result()
 	assert.Error(err)
 }

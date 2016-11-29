@@ -39,10 +39,15 @@ func (g *gollection) result() (interface{}, error) {
 }
 
 func (g *gollection) ResultAs(out interface{}) error {
-	if g.val != nil {
+	if g.err != nil {
 		return g.err
 	}
+
 	iv := reflect.ValueOf(g.slice)
+	if g.val != nil {
+		iv = reflect.ValueOf(g.val)
+	}
+
 	ov := reflect.ValueOf(out)
 	if ov.Kind() != reflect.Ptr || iv.Type() != ov.Elem().Type() {
 		return fmt.Errorf("gollection.ResultAs called with unexpected type %T, expected %s", g.slice, ov.Elem().Type())
