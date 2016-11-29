@@ -27,6 +27,10 @@ func TestDistinct_HavingError(t *testing.T) {
 	assert := assert.New(t)
 	_, err := gollection.New("not slice value").Distinct().Distinct().Result()
 	assert.Error(err)
+
+	res := []int{}
+	err = gollection.New("not slice value").Distinct().Distinct().ResultAs(&res)
+	assert.Error(err)
 }
 
 func TestDistinctBy(t *testing.T) {

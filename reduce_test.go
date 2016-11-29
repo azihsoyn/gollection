@@ -19,6 +19,13 @@ func TestReduce(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal(expect, res)
 
+	var ret int
+	err = gollection.New(arr).Reduce(func(v1, v2 int) int {
+		return v1 + v2
+	}).ResultAs(&ret)
+	assert.NoError(err)
+	assert.Equal(expect, ret)
+
 	arr = []int{1}
 	expect = 1
 
@@ -53,11 +60,11 @@ func TestReduce_HavingError(t *testing.T) {
 	assert := assert.New(t)
 	_, err := gollection.New("not slice value").
 		Reduce(func(v1, v2 interface{}) interface{} {
-		return ""
-	}).
+			return ""
+		}).
 		Reduce(func(v1, v2 interface{}) interface{} {
-		return ""
-	}).
+			return ""
+		}).
 		Result()
 	assert.Error(err)
 }
@@ -108,11 +115,11 @@ func TestReduce_Stream_HavingError(t *testing.T) {
 	assert := assert.New(t)
 	_, err := gollection.NewStream("not slice value").
 		Reduce(func(v1, v2 interface{}) interface{} {
-		return ""
-	}).
+			return ""
+		}).
 		Reduce(func(v1, v2 interface{}) interface{} {
-		return ""
-	}).
+			return ""
+		}).
 		Result()
 	assert.Error(err)
 }
