@@ -102,3 +102,48 @@ func Example_take() {
 	// Output: [1 2 3] <nil>
 	// [1 2 3 4 5 6 7 8 9 10] <nil>
 }
+
+func Example_customType() {
+	type User struct {
+		ID   int
+		Name string
+	}
+
+	in := []User{
+		{ID: 1, Name: "aaa"},
+		{ID: 2, Name: "bbb"},
+		{ID: 3, Name: "ccc"},
+		{ID: 4, Name: "ddd"},
+		{ID: 5, Name: "eee"},
+		{ID: 6, Name: "fff"},
+		{ID: 7, Name: "ggg"},
+	}
+	res, err := gollection.New(in).Filter(func(v User) bool {
+		return v.ID > 5
+	}).Result()
+	fmt.Printf("%#v %#v\n", res.([]User), err)
+	// Output: []gollection_test.User{gollection_test.User{ID:6, Name:"fff"}, gollection_test.User{ID:7, Name:"ggg"}} <nil>
+}
+
+func Example_customTypeWithResultAs() {
+	type User struct {
+		ID   int
+		Name string
+	}
+
+	in := []User{
+		{ID: 1, Name: "aaa"},
+		{ID: 2, Name: "bbb"},
+		{ID: 3, Name: "ccc"},
+		{ID: 4, Name: "ddd"},
+		{ID: 5, Name: "eee"},
+		{ID: 6, Name: "fff"},
+		{ID: 7, Name: "ggg"},
+	}
+	var res []User
+	err := gollection.New(in).Filter(func(v User) bool {
+		return v.ID > 5
+	}).ResultAs(&res)
+	fmt.Printf("%#v %#v\n", res, err)
+	// Output: []gollection_test.User{gollection_test.User{ID:6, Name:"fff"}, gollection_test.User{ID:7, Name:"ggg"}} <nil>
+}
