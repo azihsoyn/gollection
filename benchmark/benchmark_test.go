@@ -10,7 +10,22 @@ import (
 func BenchmarkNew(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
+		gollection.New([]int{})
+	}
+}
+
+func BenchmarkNewAndResult(b *testing.B) {
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
 		gollection.New([]int{}).Result()
+	}
+}
+
+func BenchmarkNewAndResultAs(b *testing.B) {
+	ret := []int{}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		gollection.New([]int{}).ResultAs(&ret)
 	}
 }
 
