@@ -14,6 +14,13 @@ func BenchmarkNew(b *testing.B) {
 	}
 }
 
+func BenchmarkNew2(b *testing.B) {
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		gollection.New2([]int{})
+	}
+}
+
 func BenchmarkNewAndResult(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -32,7 +39,7 @@ func BenchmarkNewAndResultAs(b *testing.B) {
 func BenchmarkNewStream(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		gollection.NewStream([]int{}).Result()
+		gollection.NewStream([]int{})
 	}
 }
 
@@ -40,7 +47,7 @@ func BenchmarkDistinct(b *testing.B) {
 	arr := []int{0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		gollection.New(arr).Distinct().Result()
+		gollection.New2(arr).Distinct()
 	}
 }
 

@@ -28,23 +28,24 @@ func (g *gollection) DistinctBy(f /*func(v <T1>) <T2>*/ interface{}) *gollection
 }
 
 func (g *gollection) distinct() *gollection {
-	sv, err := g.validateSlice("Distinct")
-	if err != nil {
-		return &gollection{err: err}
+	defer g.slice2.free()
+	if g.err != nil {
+		return &gollection{err: g.err}
 	}
 
-	ret := reflect.MakeSlice(sv.Type(), 0, sv.Len())
 	m := make(map[interface{}]bool)
+	ret := newInterfaceSlice()
 
-	for i := 0; i < sv.Len(); i++ {
-		v := sv.Index(i)
-		if processDistinct(v.Interface(), m) {
-			ret = reflect.Append(ret, v)
+	for i := 0; i < len(g.slice2.slice); i++ {
+		v := g.slice2.slice[i]
+		if processDistinct(v, m) {
+			ret.slice = append(ret.slice, v)
 		}
 	}
 
 	return &gollection{
-		slice: ret.Interface(),
+		slice2: ret,
+		meta:   g.meta,
 	}
 }
 
