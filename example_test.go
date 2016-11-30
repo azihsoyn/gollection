@@ -9,7 +9,7 @@ import (
 func Example_distinct() {
 	arr := []int{1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10}
 
-	res, err := gollection.New(arr).Distinct().Result()
+	res, err := gollection.New2(arr).Distinct().Result()
 	fmt.Println(res, err)
 	// Output: [1 2 3 4 5 6 7 8 9 10] <nil>
 }

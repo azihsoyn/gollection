@@ -9,11 +9,44 @@ import (
 	"sync"
 )
 
+type interfaceSlice struct {
+	slice []interface{}
+}
+
+func (s *interfaceSlice) truncate() {
+	s.slice = s.slice[:0]
+}
+
+func (s *interfaceSlice) free() {
+	slicePool.Put(s)
+}
+
+func newInterfaceSlice() *interfaceSlice {
+	s := slicePool.Get().(*interfaceSlice)
+	s.truncate()
+	return s
+}
+
+var slicePool = sync.Pool{
+	New: func() interface{} {
+		return &interfaceSlice{
+			slice: make([]interface{}, 0, 10),
+		}
+	},
+}
+
 type gollection struct {
-	slice interface{}
-	val   interface{}
-	ch    chan interface{}
-	err   error
+	slice  interface{}
+	val    interface{}
+	ch     chan interface{}
+	err    error
+	slice2 *interfaceSlice
+	meta   meta
+}
+
+type meta struct {
+	Len  int
+	Type reflect.Type
 }
 
 // New returns a gollection instance which can method chain *sequentially* specified by some type of slice.
@@ -23,10 +56,38 @@ func New(slice interface{}) *gollection {
 	}
 }
 
+func New2(slice interface{}) *gollection {
+	sv := reflect.ValueOf(slice)
+	if sv.Kind() != reflect.Slice {
+		return &gollection{err: fmt.Errorf("gollection.%s called with non-slice value of type %T", slice)}
+	}
+	s := newInterfaceSlice()
+
+	for i := 0; i < sv.Len(); i++ {
+		v := sv.Index(i).Interface()
+		s.slice = append(s.slice, v)
+	}
+	return &gollection{
+		slice:  slice,
+		slice2: s,
+		meta: meta{
+			Len:  sv.Len(),
+			Type: sv.Type(),
+		},
+	}
+}
+
 // Result return a collection processed value and error.
 func (g *gollection) Result() (interface{}, error) {
 	if g.ch != nil {
 		return g.resultStream()
+	}
+	if g.slice2 != nil {
+		ret := reflect.MakeSlice(g.meta.Type, 0, g.meta.Len)
+		for _, v := range g.slice2.slice {
+			ret = reflect.Append(ret, reflect.ValueOf(v))
+		}
+		return ret.Interface(), g.err
 	}
 	return g.result()
 }
